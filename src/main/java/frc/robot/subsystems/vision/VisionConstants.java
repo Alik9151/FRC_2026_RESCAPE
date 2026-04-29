@@ -10,7 +10,7 @@ public final class VisionConstants {
   public static final AprilTagFieldLayout APRIL_TAG_LAYOUT =
       AprilTagFieldLayout.loadField(
           AprilTagFields
-              .k2026RebuiltAndymark); // Chesapeake = AndyMark, FIRST Championship = Welded
+              .k2025ReefscapeAndyMark); // Chesapeake = AndyMark, FIRST Championship = Welded
 
   // Camera names, must match names configured on coprocessor
   public static final String CAMERA_0_NAME = "Camera_Left";
