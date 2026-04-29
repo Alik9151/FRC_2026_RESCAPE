@@ -16,6 +16,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import frc.robot.Constants;
+import frc.robot.Constants.CANConstants;
 import frc.robot.util.PhoenixUtil;
 
 public class ElevatorIOTalonFX implements ElevatorIO {
@@ -39,8 +40,8 @@ public class ElevatorIOTalonFX implements ElevatorIO {
   private final StatusSignal<Temperature> followerTemp;
 
   public ElevatorIOTalonFX() {
-    leader = new TalonFX(0);
-    follower = new TalonFX(0);
+    leader = new TalonFX(Constants.CANConstants.ELEVATOR_LEADER,  CANConstants.SUPERSTRUCTURE_CAN_BUS);
+    follower = new TalonFX(Constants.CANConstants.ELEVATOR_FOLLOWER,  CANConstants.SUPERSTRUCTURE_CAN_BUS);
 
     tryUntilOk(5, () -> leader.getConfigurator().apply(ElevatorConstants.ELEVATOR_CONFIG));
     tryUntilOk(5, () -> follower.getConfigurator().apply(ElevatorConstants.ELEVATOR_CONFIG));

@@ -42,6 +42,9 @@ public final class Constants {
 
   public static final class CANConstants {
     public static final CANBus SUPERSTRUCTURE_CAN_BUS = new CANBus("Superstructure");
+
+    public static final int ELEVATOR_LEADER = 0;
+    public static final int ELEVATOR_FOLLOWER = 0;
   }
 
   public static final class FieldConstants {
