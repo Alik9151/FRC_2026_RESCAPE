@@ -40,37 +40,11 @@ public final class Constants {
   }
 
   public static final class CANConstants {
-    public static final CANBus SUPERSTRUCTURE_CAN_BUS = new CANBus("Superstructure");
-
-    public static final int SHOOTER_TOP_LEFT = 14;
-    public static final int SHOOTER_BOTTOM_LEFT = 15;
-    public static final int SHOOTER_TOP_RIGHT = 16;
-    public static final int SHOOTER_BOTTOM_RIGHT = 17;
-
-    public static final int INTAKE_PIVOT = 18;
-    public static final int PIVOT_ENCODER = 22;
-    public static final int INTAKE_ROLLER = 19;
-
-    public static final int KICKER = 20;
-    public static final int INDEXER = 21;
+    
   }
 
   public static final class FieldConstants {
-    public static final Translation2d RED_HUB = new Translation2d(11.938, 4.0);
-    public static final Translation2d BLUE_HUB = new Translation2d(4.597, 4.0);
-    public static final Translation2d RED_LEFT_BUMP = new Translation2d(11.928, 2.408);
-    public static final Translation2d RED_RIGHT_BUMP = new Translation2d(11.928, 5.598);
-    public static final Translation2d BLUE_LEFT_BUMP = new Translation2d(4.617, 5.598);
-    public static final Translation2d BLUE_RIGHT_BUMP = new Translation2d(4.617, 2.408);
-    public static final Translation2d RED_LEFT_TRENCH = new Translation2d(11.928, 0.586);
-    public static final Translation2d RED_RIGHT_TRENCH = new Translation2d(11.928, 7.423);
-    public static final Translation2d BLUE_LEFT_TRENCH = new Translation2d(4.617, 7.423);
-    public static final Translation2d BLUE_RIGHT_TRENCH = new Translation2d(4.617, 0.586);
-
-    public static final double RED_ALLIANCE_BOUNDARY = RED_LEFT_BUMP.getX();
-    public static final double BLUE_ALLIANCE_BOUNDARY = BLUE_LEFT_BUMP.getX();
-
-    public static final Distance FIELD_LENGTH = Meters.of(16.541);
-    public static final Distance FIELD_WIDTH = Meters.of(8.069);
+    public static final Distance FIELD_LENGTH = Meters.of(17.5133);
+    public static final Distance FIELD_WIDTH = Meters.of(8.0518);
   }
 }
