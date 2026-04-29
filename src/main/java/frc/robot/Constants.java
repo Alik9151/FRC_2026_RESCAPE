@@ -9,6 +9,7 @@ import static edu.wpi.first.units.Units.Meters;
 import com.ctre.phoenix6.CANBus;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.RobotBase;
+import frc.robot.subsystems.vision.VisionConstants;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -48,7 +49,9 @@ public final class Constants {
   }
 
   public static final class FieldConstants {
-    public static final Distance FIELD_LENGTH = Meters.of(17.5133);
-    public static final Distance FIELD_WIDTH = Meters.of(8.0518);
+    public static final Distance FIELD_LENGTH =
+        Meters.of(VisionConstants.APRIL_TAG_LAYOUT.getFieldLength());
+    public static final Distance FIELD_WIDTH =
+        Meters.of(VisionConstants.APRIL_TAG_LAYOUT.getFieldWidth());
   }
 }

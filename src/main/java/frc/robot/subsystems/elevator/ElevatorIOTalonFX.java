@@ -40,8 +40,10 @@ public class ElevatorIOTalonFX implements ElevatorIO {
   private final StatusSignal<Temperature> followerTemp;
 
   public ElevatorIOTalonFX() {
-    leader = new TalonFX(Constants.CANConstants.ELEVATOR_LEADER,  CANConstants.SUPERSTRUCTURE_CAN_BUS);
-    follower = new TalonFX(Constants.CANConstants.ELEVATOR_FOLLOWER,  CANConstants.SUPERSTRUCTURE_CAN_BUS);
+    leader =
+        new TalonFX(Constants.CANConstants.ELEVATOR_LEADER, CANConstants.SUPERSTRUCTURE_CAN_BUS);
+    follower =
+        new TalonFX(Constants.CANConstants.ELEVATOR_FOLLOWER, CANConstants.SUPERSTRUCTURE_CAN_BUS);
 
     tryUntilOk(5, () -> leader.getConfigurator().apply(ElevatorConstants.ELEVATOR_CONFIG));
     tryUntilOk(5, () -> follower.getConfigurator().apply(ElevatorConstants.ELEVATOR_CONFIG));
