@@ -37,6 +37,8 @@ import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.BetterAutoChooser;
 import frc.robot.util.PhoenixUtil;
 import frc.robot.util.RobotUtil;
+import frc.robot.util.reef.Reef;
+import frc.robot.util.reef.ReefConstants;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
@@ -54,6 +56,9 @@ public class RobotContainer {
   private final Drive drive;
   private final Vision vision;
   private final Elevator elevator;
+
+  // reef
+  private final Reef reef;
 
   // controllers
   private final CommandXboxController driverController =
@@ -82,6 +87,7 @@ public class RobotContainer {
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {});
         elevator = new Elevator(new ElevatorIOTalonFX());
+        reef = new Reef(ReefConstants.blueAprilTags);
         break;
       case SIM:
         SimulatedArena.overrideInstance(new Arena2025Reefscape());
@@ -110,6 +116,7 @@ public class RobotContainer {
                     VisionConstants.robotToCamera1,
                     driveSimulation::getSimulatedDriveTrainPose));
         elevator = new Elevator(new ElevatorIOSim());
+        reef = new Reef(ReefConstants.blueAprilTags);
         break;
       default:
         // replay
@@ -129,6 +136,7 @@ public class RobotContainer {
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {}, new VisionIO() {});
         elevator = new Elevator(new ElevatorIO() {});
+        reef = new Reef(ReefConstants.blueAprilTags);
     }
 
     PhoenixUtil.startTelemetry();
@@ -245,5 +253,7 @@ public class RobotContainer {
     // to set up the model
     Logger.recordOutput("FieldSimulation/CoralPositions", CoralPoses);
     Logger.recordOutput("FieldSimulation/AlgaePositions", AlgaePoses);
+
+    Logger.recordOutput("FieldSimulation/PolePositions", reef.getPose2ds());
   }
 }

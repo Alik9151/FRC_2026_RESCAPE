@@ -11,7 +11,7 @@ public class Reef {
   private Pole[] poles;
 
   public Reef(int[] tags) {
-    poles = new Pole[tags.length * 3];
+    poles = new Pole[tags.length * 2];
     for (int i = 0; i < tags.length; i++) {
       addBranchesFromTag(getTagPose2d(tags[i]), i);
     }
@@ -23,12 +23,14 @@ public class Reef {
   }
 
   private void addBranchesFromTag(Pose2d tag, int tagNum) {
-    poles[tagNum * 3] =
-        new Pole(tag.getTranslation().plus(ReefConstants.leftOffset.rotateBy(tag.getRotation())));
-    poles[tagNum * 3 + 1] = new Pole(tag.getTranslation());
-
-    poles[tagNum * 3 + 2] =
-        new Pole(tag.getTranslation().plus(ReefConstants.rightOffset.rotateBy(tag.getRotation())));
+    poles[tagNum * 2] =
+        new Pole(
+            tag.getTranslation().plus(ReefConstants.leftOffset.rotateBy(tag.getRotation())),
+            tag.getRotation());
+    poles[tagNum * 2 + 1] =
+        new Pole(
+            tag.getTranslation().plus(ReefConstants.rightOffset.rotateBy(tag.getRotation())),
+            tag.getRotation());
   }
 
   public Pole getBestPole(Translation2d robotPose) {
@@ -50,5 +52,13 @@ public class Reef {
     }
 
     return bestPole;
+  }
+
+  public Pose2d[] getPose2ds() {
+    Pose2d[] polePoses = new Pose2d[poles.length];
+    for (int i = 0; i < poles.length; i++) {
+      polePoses[i] = poles[i].getPose2d();
+    }
+    return polePoses;
   }
 }

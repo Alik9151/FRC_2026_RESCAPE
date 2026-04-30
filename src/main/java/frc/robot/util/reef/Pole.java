@@ -1,14 +1,18 @@
 package frc.robot.util.reef;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 
 public class Pole {
   private Translation2d pose;
+  private Rotation2d rotation;
   private boolean[] levelFull;
   private int maxLevel;
 
-  public Pole(Translation2d pose) {
+  public Pole(Translation2d pose, Rotation2d rotation) {
     this.pose = pose;
+    this.rotation = rotation;
     levelFull = new boolean[3];
     maxLevel = 4;
   }
@@ -31,5 +35,9 @@ public class Pole {
 
   public Translation2d getTranslation2d() {
     return pose;
+  }
+
+  public Pose2d getPose2d() {
+    return new Pose2d(pose, rotation);
   }
 }
