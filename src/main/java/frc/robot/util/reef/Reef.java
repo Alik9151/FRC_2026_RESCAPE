@@ -39,7 +39,7 @@ public class Reef {
 
     for (Pole pole : poles) {
       int curLevel = pole.getMaxLevel();
-      if (curLevel > bestPole.getMaxLevel()) {
+      if (bestPole == null || curLevel > bestPole.getMaxLevel()) {
         bestPole = pole;
         bestDistance = robotPose.getDistance(pole.getTranslation2d());
       } else if (curLevel == bestPole.getMaxLevel()) {

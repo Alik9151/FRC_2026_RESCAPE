@@ -7,6 +7,7 @@ package frc.robot;
 import static edu.wpi.first.units.Units.Meters;
 
 import com.ctre.phoenix6.CANBus;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.vision.VisionConstants;
@@ -53,5 +54,10 @@ public final class Constants {
         Meters.of(VisionConstants.APRIL_TAG_LAYOUT.getFieldLength());
     public static final Distance FIELD_WIDTH =
         Meters.of(VisionConstants.APRIL_TAG_LAYOUT.getFieldWidth());
+
+    public static final Pose2d LOADING_STATION_LEFT =
+        VisionConstants.APRIL_TAG_LAYOUT.getTagPose(13).get().toPose2d();
+    public static final Pose2d LOADING_STATION_RIGHT =
+        VisionConstants.APRIL_TAG_LAYOUT.getTagPose(12).get().toPose2d();
   }
 }

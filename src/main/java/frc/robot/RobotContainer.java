@@ -5,14 +5,23 @@
 package frc.robot;
 
 import static frc.robot.Constants.currentMode;
-import static frc.robot.subsystems.elevator.Elevator.ElevatorState.*;
+import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L1;
+import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L2;
+import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L3;
+import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L4;
+import static frc.robot.subsystems.elevator.Elevator.ElevatorState.STOWED;
 
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandGenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -37,8 +46,10 @@ import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.BetterAutoChooser;
 import frc.robot.util.PhoenixUtil;
 import frc.robot.util.RobotUtil;
+import frc.robot.util.loading.loadingUtils;
 import frc.robot.util.reef.Reef;
 import frc.robot.util.reef.ReefConstants;
+import java.util.Set;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
@@ -204,12 +215,35 @@ public class RobotContainer {
     Command l3Coral = Commands.runOnce(() -> elevator.setState(CORAL_L3));
     Command l4Coral = Commands.runOnce(() -> elevator.setState(CORAL_L4));
 
+    // Auto Score Commands
+    PathConstraints constraints =
+        new PathConstraints(2.0, 3.0, Units.degreesToRadians(540), Units.degreesToRadians(720));
+
+    Command autoPoleCommand =
+        Commands.defer(
+            () -> {
+              Translation2d currentRobotPos = drive.getPose().getTranslation();
+              Pose2d targetPose = reef.getBestPole(currentRobotPos).getPose2d();
+              return AutoBuilder.pathfindToPose(targetPose, constraints, 0.0);
+            },
+            Set.of(drive));
+
+    Command autoLoadingStationCommand =
+        Commands.defer(
+            () -> {
+              Translation2d currentRobotPos = drive.getPose().getTranslation();
+              Pose2d targetPose = loadingUtils.getClosestLoader(currentRobotPos);
+              return AutoBuilder.pathfindToPose(targetPose, constraints, 0.0);
+            },
+            Set.of(drive));
+
     drive.setDefaultCommand(defaultDriveCommand);
     elevator.setDefaultCommand(defaultElevatorCommand);
 
     if (Constants.currentMode == Constants.Mode.SIM) {
-      // CommandGenericHID keyboard = new CommandGenericHID(2);
-      // keyboard.button(1).whileTrue(holdIntake);
+      CommandGenericHID keyboard = new CommandGenericHID(2);
+      keyboard.button(1).onTrue(autoPoleCommand);
+      keyboard.button(2).onTrue(autoLoadingStationCommand);
     }
 
     if (DriverStation.isTest()) {
