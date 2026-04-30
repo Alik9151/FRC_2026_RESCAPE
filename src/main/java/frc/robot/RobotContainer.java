@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static frc.robot.Constants.currentMode;
+import static frc.robot.subsystems.elevator.Elevator.ElevatorState.*;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
@@ -25,6 +26,10 @@ import frc.robot.subsystems.drive.GyroIOSim;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOTalonFXReal;
 import frc.robot.subsystems.drive.ModuleIOTalonFXSim;
+import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorIO;
+import frc.robot.subsystems.elevator.ElevatorIOSim;
+import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
@@ -48,6 +53,7 @@ public class RobotContainer {
   // subsystems
   private final Drive drive;
   private final Vision vision;
+  private final Elevator elevator;
 
   // controllers
   private final CommandXboxController driverController =
@@ -75,14 +81,7 @@ public class RobotContainer {
                 new ModuleIOTalonFXReal(TunerConstants.BackRight),
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {});
-        //                new VisionIOPhotonVision(
-        //                    VisionConstants.CAMERA_0_NAME, VisionConstants.robotToCamera0),
-        //                new VisionIOPhotonVision(
-        //                    VisionConstants.CAMERA_1_NAME, VisionConstants.robotToCamera1),
-        //                new VisionIOPhotonVision(
-        //                    VisionConstants.CAMERA_2_NAME, VisionConstants.robotToCamera2),
-        //                new VisionIOPhotonVision(
-        //                    VisionConstants.CAMERA_3_NAME, VisionConstants.robotToCamera3));
+        elevator = new Elevator(new ElevatorIOTalonFX());
         break;
       case SIM:
         SimulatedArena.overrideInstance(new Arena2025Reefscape());
@@ -110,7 +109,7 @@ public class RobotContainer {
                     VisionConstants.CAMERA_1_NAME,
                     VisionConstants.robotToCamera1,
                     driveSimulation::getSimulatedDriveTrainPose));
-        //                new VisionIO() {});
+        elevator = new Elevator(new ElevatorIOSim());
         break;
       default:
         // replay
@@ -130,7 +129,8 @@ public class RobotContainer {
                 (pose) -> {});
         vision =
             new Vision(
-                drive, new VisionIO() {}, new VisionIO() {}, new VisionIO() {}, new VisionIO() {});
+                drive, new VisionIO() {}, new VisionIO() {});
+        elevator = new Elevator(new ElevatorIO() {});
     }
 
     PhoenixUtil.startTelemetry();
@@ -189,7 +189,17 @@ public class RobotContainer {
     // Reset gyro to 0°
     Command zeroGyro = Commands.runOnce(() -> drive.zeroGyro(true), drive).ignoringDisable(true);
 
+    // Elevator commands
+    Command defaultElevatorCommand = elevator.manualControl(() -> -operatorController.getLeftY());
+    Command elevatorHoming = elevator.homingSequence();
+    Command stowElevator = Commands.runOnce(() -> elevator.setState(STOWED));
+    Command l1Coral = Commands.runOnce(() -> elevator.setState(CORAL_L1));
+    Command l2Coral = Commands.runOnce(() -> elevator.setState(CORAL_L2));
+    Command l3Coral = Commands.runOnce(() -> elevator.setState(CORAL_L3));
+    Command l4Coral = Commands.runOnce(() -> elevator.setState(CORAL_L4));
+
     drive.setDefaultCommand(defaultDriveCommand);
+    elevator.setDefaultCommand(defaultElevatorCommand);
 
     if (Constants.currentMode == Constants.Mode.SIM) {
       // CommandGenericHID keyboard = new CommandGenericHID(2);
