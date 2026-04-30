@@ -6,6 +6,7 @@ package frc.robot;
 
 import static edu.wpi.first.units.Units.Meters;
 
+import com.ctre.phoenix6.CANBus;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.RobotBase;
 
@@ -35,9 +36,13 @@ public final class Constants {
   public static final class ControllerConstants {
     public static final int DRIVER_CONTROLLER_PORT = 0;
     public static final int OPERATOR_CONTROLLER_PORT = 1;
+    public static final double DRIVER_DEADBAND = 0.1;
+    public static final double OPERATOR_DEADBAND = 0.1;
   }
 
-  public static final class CANConstants {}
+  public static final class CANConstants {
+    public static final CANBus SUPERSTRUCTURE_CAN_BUS = new CANBus("Superstructure");
+  }
 
   public static final class FieldConstants {
     public static final Distance FIELD_LENGTH = Meters.of(17.5133);
