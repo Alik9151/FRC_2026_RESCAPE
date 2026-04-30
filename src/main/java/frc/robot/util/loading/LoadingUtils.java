@@ -4,7 +4,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.Constants.FieldConstants;
 
-public class loadingUtils {
+public class LoadingUtils {
 
   public static Pose2d getClosestLoader(Translation2d robotPose) {
     double distL =

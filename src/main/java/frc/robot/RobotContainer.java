@@ -46,7 +46,7 @@ import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.BetterAutoChooser;
 import frc.robot.util.PhoenixUtil;
 import frc.robot.util.RobotUtil;
-import frc.robot.util.loading.loadingUtils;
+import frc.robot.util.loading.LoadingUtils;
 import frc.robot.util.reef.Reef;
 import frc.robot.util.reef.ReefConstants;
 import java.util.Set;
@@ -98,7 +98,6 @@ public class RobotContainer {
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {});
         elevator = new Elevator(new ElevatorIOTalonFX());
-        reef = new Reef(ReefConstants.blueAprilTags);
         break;
       case SIM:
         SimulatedArena.overrideInstance(new Arena2025Reefscape());
@@ -127,7 +126,6 @@ public class RobotContainer {
                     VisionConstants.robotToCamera1,
                     driveSimulation::getSimulatedDriveTrainPose));
         elevator = new Elevator(new ElevatorIOSim());
-        reef = new Reef(ReefConstants.blueAprilTags);
         break;
       default:
         // replay
@@ -147,8 +145,8 @@ public class RobotContainer {
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {}, new VisionIO() {});
         elevator = new Elevator(new ElevatorIO() {});
-        reef = new Reef(ReefConstants.blueAprilTags);
     }
+    reef = new Reef(RobotUtil.isRedAlliance() ? ReefConstants.RED_APRIL_TAGS : ReefConstants.BLUE_APRIL_TAGS);
 
     PhoenixUtil.startTelemetry();
 
@@ -219,7 +217,7 @@ public class RobotContainer {
     PathConstraints constraints =
         new PathConstraints(2.0, 3.0, Units.degreesToRadians(540), Units.degreesToRadians(720));
 
-    Command autoPoleCommand =
+    Command driveToPole =
         Commands.defer(
             () -> {
               Translation2d currentRobotPos = drive.getPose().getTranslation();
@@ -228,11 +226,11 @@ public class RobotContainer {
             },
             Set.of(drive));
 
-    Command autoLoadingStationCommand =
+    Command driveToLoading =
         Commands.defer(
             () -> {
               Translation2d currentRobotPos = drive.getPose().getTranslation();
-              Pose2d targetPose = loadingUtils.getClosestLoader(currentRobotPos);
+              Pose2d targetPose = LoadingUtils.getClosestLoader(currentRobotPos);
               return AutoBuilder.pathfindToPose(targetPose, constraints, 0.0);
             },
             Set.of(drive));
@@ -242,8 +240,8 @@ public class RobotContainer {
 
     if (Constants.currentMode == Constants.Mode.SIM) {
       CommandGenericHID keyboard = new CommandGenericHID(2);
-      keyboard.button(1).onTrue(autoPoleCommand);
-      keyboard.button(2).onTrue(autoLoadingStationCommand);
+      keyboard.button(1).onTrue(driveToPole);
+      keyboard.button(2).onTrue(driveToLoading);
     }
 
     if (DriverStation.isTest()) {
@@ -288,6 +286,6 @@ public class RobotContainer {
     Logger.recordOutput("FieldSimulation/CoralPositions", CoralPoses);
     Logger.recordOutput("FieldSimulation/AlgaePositions", AlgaePoses);
 
-    Logger.recordOutput("FieldSimulation/PolePositions", reef.getPose2ds());
+    Logger.recordOutput("FieldSimulation/PolePositions", reef.getPoses());
   }
 }

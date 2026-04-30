@@ -7,8 +7,7 @@ import frc.robot.subsystems.vision.VisionConstants;
 import java.util.Optional;
 
 public class Reef {
-
-  private Pole[] poles;
+  private final Pole[] poles;
 
   public Reef(int[] tags) {
     poles = new Pole[tags.length * 2];
@@ -24,13 +23,13 @@ public class Reef {
 
   private void addBranchesFromTag(Pose2d tag, int tagNum) {
     poles[tagNum * 2] =
-        new Pole(
-            tag.getTranslation().plus(ReefConstants.leftOffset.rotateBy(tag.getRotation())),
-            tag.getRotation());
+        new Pole(new Pose2d(
+            tag.getTranslation().plus(ReefConstants.LEFT_OFFSET.rotateBy(tag.getRotation())),
+            tag.getRotation()));
     poles[tagNum * 2 + 1] =
-        new Pole(
-            tag.getTranslation().plus(ReefConstants.rightOffset.rotateBy(tag.getRotation())),
-            tag.getRotation());
+        new Pole(new Pose2d(
+            tag.getTranslation().plus(ReefConstants.RIGHT_OFFSET.rotateBy(tag.getRotation())),
+            tag.getRotation()));
   }
 
   public Pole getBestPole(Translation2d robotPose) {
@@ -54,11 +53,49 @@ public class Reef {
     return bestPole;
   }
 
-  public Pose2d[] getPose2ds() {
+  public Pose2d[] getPoses() {
     Pose2d[] polePoses = new Pose2d[poles.length];
     for (int i = 0; i < poles.length; i++) {
       polePoses[i] = poles[i].getPose2d();
     }
     return polePoses;
+  }
+
+  public static class Pole {
+    private final Pose2d pose;
+    private final Translation2d translation;
+    private final boolean[] levels;
+    private int maxLevel;
+
+    public Pole(Pose2d pose) {
+      this.pose = pose;
+      this.translation = pose.getTranslation();
+      levels = new boolean[3];
+      maxLevel = 4;
+    }
+
+    public void updateLevel(int level) {
+      levels[level - 2] = !levels[level - 2];
+      findMaxLevel();
+    }
+
+    private void findMaxLevel() {
+      if (!levels[2]) maxLevel = 4;
+      else if (!levels[1]) maxLevel = 3;
+      else if (!levels[0]) maxLevel = 2;
+      maxLevel = -1;
+    }
+
+    public int getMaxLevel() {
+      return maxLevel;
+    }
+
+    public Translation2d getTranslation2d() {
+      return translation;
+    }
+
+    public Pose2d getPose2d() {
+      return pose;
+    }
   }
 }
