@@ -228,6 +228,11 @@ public class RobotContainer {
       CommandGenericHID keyboard = new CommandGenericHID(2);
       keyboard.button(1).onTrue(driveToPole);
       keyboard.button(2).onTrue(driveToLoading);
+      keyboard
+          .button(3)
+          .onTrue(
+              Commands.runOnce(
+                  () -> AutoControlCommands.autoControl = !AutoControlCommands.autoControl));
     }
 
     if (DriverStation.isTest()) {
