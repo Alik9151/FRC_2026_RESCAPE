@@ -11,13 +11,9 @@ import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L3;
 import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L4;
 import static frc.robot.subsystems.elevator.Elevator.ElevatorState.STOWED;
 
-import com.pathplanner.lib.auto.AutoBuilder;
-import com.pathplanner.lib.path.PathConstraints;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -26,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.commands.AutoControlCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.drive.Drive;
@@ -46,7 +43,6 @@ import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.BetterAutoChooser;
 import frc.robot.util.PhoenixUtil;
 import frc.robot.util.RobotUtil;
-import frc.robot.util.loading.LoadingUtils;
 import frc.robot.util.reef.Reef;
 import frc.robot.util.reef.ReefConstants;
 import java.util.Set;
@@ -146,7 +142,11 @@ public class RobotContainer {
         vision = new Vision(drive, new VisionIO() {}, new VisionIO() {});
         elevator = new Elevator(new ElevatorIO() {});
     }
-    reef = new Reef(RobotUtil.isRedAlliance() ? ReefConstants.RED_APRIL_TAGS : ReefConstants.BLUE_APRIL_TAGS);
+    reef =
+        new Reef(
+            RobotUtil.isRedAlliance()
+                ? ReefConstants.RED_APRIL_TAGS
+                : ReefConstants.BLUE_APRIL_TAGS);
 
     PhoenixUtil.startTelemetry();
 
@@ -213,27 +213,13 @@ public class RobotContainer {
     Command l3Coral = Commands.runOnce(() -> elevator.setState(CORAL_L3));
     Command l4Coral = Commands.runOnce(() -> elevator.setState(CORAL_L4));
 
-    // Auto Score Commands
-    PathConstraints constraints =
-        new PathConstraints(2.0, 3.0, Units.degreesToRadians(540), Units.degreesToRadians(720));
-
+    // Auto Drive Commands
     Command driveToPole =
-        Commands.defer(
-            () -> {
-              Translation2d currentRobotPos = drive.getPose().getTranslation();
-              Pose2d targetPose = reef.getBestPole(currentRobotPos).getPose2d();
-              return AutoBuilder.pathfindToPose(targetPose, constraints, 0.0);
-            },
-            Set.of(drive));
+        Commands.defer(() -> AutoControlCommands.driveToReef(drive::getPose, reef), Set.of(drive));
 
     Command driveToLoading =
         Commands.defer(
-            () -> {
-              Translation2d currentRobotPos = drive.getPose().getTranslation();
-              Pose2d targetPose = LoadingUtils.getClosestLoader(currentRobotPos);
-              return AutoBuilder.pathfindToPose(targetPose, constraints, 0.0);
-            },
-            Set.of(drive));
+            () -> AutoControlCommands.driveToLoading(drive::getPose, reef), Set.of(drive));
 
     drive.setDefaultCommand(defaultDriveCommand);
     elevator.setDefaultCommand(defaultElevatorCommand);
