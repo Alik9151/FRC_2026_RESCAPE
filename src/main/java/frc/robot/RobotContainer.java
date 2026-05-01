@@ -22,6 +22,7 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants.ControllerConstants;
+import frc.robot.Constants.FieldConstants;
 import frc.robot.commands.AutoControlCommands;
 import frc.robot.commands.DriveCommands;
 import frc.robot.generated.TunerConstants;
@@ -147,6 +148,11 @@ public class RobotContainer {
             RobotUtil.isRedAlliance()
                 ? ReefConstants.RED_APRIL_TAGS
                 : ReefConstants.BLUE_APRIL_TAGS);
+    Logger.recordOutput("FieldElements/PolePositions", reef.getPoses());
+    Logger.recordOutput(
+        "FieldElements/LoadingPositions",
+        FieldConstants.LOADING_STATION_LEFT,
+        FieldConstants.LOADING_STATION_RIGHT);
 
     PhoenixUtil.startTelemetry();
 
@@ -276,7 +282,5 @@ public class RobotContainer {
     // to set up the model
     Logger.recordOutput("FieldSimulation/CoralPositions", CoralPoses);
     Logger.recordOutput("FieldSimulation/AlgaePositions", AlgaePoses);
-
-    Logger.recordOutput("FieldSimulation/PolePositions", reef.getPoses());
   }
 }
