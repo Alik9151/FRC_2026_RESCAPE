@@ -42,7 +42,7 @@ public class Reef {
       int curLevel = pole.getMaxLevel();
       if (bestPole == null || curLevel > bestPole.getMaxLevel()) {
         bestPole = pole;
-        bestDistance = robotPose.getDistance(pole.getTranslation2d());
+        bestDistance = robotPose.getSquaredDistance(pole.getTranslation2d());
       } else if (curLevel == bestPole.getMaxLevel()) {
         double currentDistance = robotPose.getSquaredDistance(pole.getTranslation2d());
         if (currentDistance < bestDistance) {
@@ -85,7 +85,7 @@ public class Reef {
       if (!levels[2]) maxLevel = 4;
       else if (!levels[1]) maxLevel = 3;
       else if (!levels[0]) maxLevel = 2;
-      maxLevel = -1;
+      else maxLevel = -1;
     }
 
     public int getMaxLevel() {
