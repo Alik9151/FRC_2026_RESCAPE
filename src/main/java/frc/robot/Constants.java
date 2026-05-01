@@ -49,6 +49,8 @@ public final class Constants {
     public static final int ELEVATOR_FOLLOWER = 0;
 
     public static final int INTAKE = 0;
+
+    public static final int OUTTAKE = 0;
   }
 
   public static final class FieldConstants {

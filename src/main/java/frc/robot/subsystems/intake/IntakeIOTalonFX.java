@@ -20,7 +20,7 @@ public class IntakeIOTalonFX implements IntakeIO {
 
   private final VelocityVoltage velocityRequest = new VelocityVoltage(0);
 
-  // inputs from indexer
+  // inputs from intake
   private final StatusSignal<Voltage> voltage;
   private final StatusSignal<Current> statorCurrent;
   private final StatusSignal<AngularVelocity> velocityRPS;
@@ -28,29 +28,28 @@ public class IntakeIOTalonFX implements IntakeIO {
   public IntakeIOTalonFX() {
     intake = new TalonFX(CANConstants.INTAKE, CANConstants.SUPERSTRUCTURE_CAN_BUS);
 
-    TalonFXConfiguration indexerConfig = new TalonFXConfiguration();
+    TalonFXConfiguration intakeConfig = new TalonFXConfiguration();
 
-    indexerConfig.MotorOutput.Inverted = IntakeConstants.INDEXER_INVERTED;
-    indexerConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    indexerConfig.CurrentLimits.StatorCurrentLimit = IntakeConstants.INDEXER_STATOR_LIMIT;
-    indexerConfig.CurrentLimits.SupplyCurrentLimit = IntakeConstants.INDEXER_SUPPLY_LIMIT;
-    indexerConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    indexerConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
+    intakeConfig.MotorOutput.Inverted = IntakeConstants.INTAKE_INVERTED;
+    intakeConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
+    intakeConfig.CurrentLimits.StatorCurrentLimit = IntakeConstants.INTAKE_STATOR_LIMIT;
+    intakeConfig.CurrentLimits.SupplyCurrentLimit = IntakeConstants.INTAKE_SUPPLY_LIMIT;
+    intakeConfig.CurrentLimits.StatorCurrentLimitEnable = true;
+    intakeConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
 
-    indexerConfig.Slot0.kP = IntakeConstants.INDEXER_KP;
-    indexerConfig.Slot0.kI = IntakeConstants.INDEXER_KI;
-    indexerConfig.Slot0.kD = IntakeConstants.INDEXER_KD;
-    indexerConfig.Slot0.kS = IntakeConstants.INDEXER_KS;
-    indexerConfig.Slot0.kV = IntakeConstants.INDEXER_KV;
+    intakeConfig.Slot0.kP = IntakeConstants.INTAKE_KP;
+    intakeConfig.Slot0.kI = IntakeConstants.INTAKE_KI;
+    intakeConfig.Slot0.kD = IntakeConstants.INTAKE_KD;
+    intakeConfig.Slot0.kS = IntakeConstants.INTAKE_KS;
+    intakeConfig.Slot0.kV = IntakeConstants.INTAKE_KV;
 
-    tryUntilOk(5, () -> intake.getConfigurator().apply(indexerConfig));
+    tryUntilOk(5, () -> intake.getConfigurator().apply(intakeConfig));
 
     voltage = intake.getMotorVoltage();
     statorCurrent = intake.getStatorCurrent();
     velocityRPS = intake.getVelocity();
 
-    BaseStatusSignal.setUpdateFrequencyForAll(
-        100.0, voltage, statorCurrent, velocityRPS);
+    BaseStatusSignal.setUpdateFrequencyForAll(100.0, voltage, statorCurrent, velocityRPS);
     ParentDevice.optimizeBusUtilizationForAll(intake);
 
     PhoenixUtil.registerSignals(
@@ -59,8 +58,7 @@ public class IntakeIOTalonFX implements IntakeIO {
 
   @Override
   public void updateInputs(IntakeIOInputs inputs) {
-    inputs.connected =
-        BaseStatusSignal.isAllGood(voltage, statorCurrent, velocityRPS);
+    inputs.connected = BaseStatusSignal.isAllGood(voltage, statorCurrent, velocityRPS);
     inputs.appliedVolts = voltage.getValueAsDouble();
     inputs.statorCurrentAmps = statorCurrent.getValueAsDouble();
     inputs.velocityRPS = velocityRPS.getValueAsDouble();
