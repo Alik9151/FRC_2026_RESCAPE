@@ -20,7 +20,6 @@ public class IntakeIOTalonFX implements IntakeIO {
 
   private final VelocityVoltage velocityRequest = new VelocityVoltage(0);
 
-  // inputs from intake
   private final StatusSignal<Voltage> voltage;
   private final StatusSignal<Current> statorCurrent;
   private final StatusSignal<AngularVelocity> velocityRPS;

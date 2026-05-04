@@ -4,6 +4,7 @@
 
 package frc.robot.subsystems.outtake;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import org.littletonrobotics.junction.Logger;
@@ -11,6 +12,8 @@ import org.littletonrobotics.junction.Logger;
 public class Outtake extends SubsystemBase {
   private final OuttakeIO io;
   private final OuttakeIOInputsAutoLogged inputs = new OuttakeIOInputsAutoLogged();
+
+  private final Debouncer debouncer = new Debouncer(0.1);
 
   public Outtake(OuttakeIO io) {
     this.io = io;
@@ -34,7 +37,11 @@ public class Outtake extends SubsystemBase {
     io.stop();
   }
 
-  public Command OuttakeCommand() {
+  public boolean hasGamePiece() {
+    return debouncer.calculate(inputs.isLoaded);
+  }
+
+  public Command outtakeCommand() {
     return startEnd(this::enable, this::stop);
   }
 

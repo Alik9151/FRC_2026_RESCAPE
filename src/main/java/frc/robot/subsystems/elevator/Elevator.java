@@ -1,16 +1,16 @@
 package frc.robot.subsystems.elevator;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.Constants.ControllerConstants.OPERATOR_DEADBAND;
 import static frc.robot.subsystems.elevator.ElevatorConstants.SETPOINTS;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.units.measure.Angle;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.util.subsystems.ExtendedSubsystem;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -30,10 +30,25 @@ public class Elevator extends ExtendedSubsystem {
     MANUAL_CONTROL
   }
 
-  private ElevatorState setpoint;
+  private static final Map<Integer, ElevatorState> elevatorStateMap = new HashMap<>();
+
+  static {
+    elevatorStateMap.put(0, ElevatorState.STOWED);
+    elevatorStateMap.put(1, ElevatorState.CORAL_L1);
+    elevatorStateMap.put(2, ElevatorState.CORAL_L2);
+    elevatorStateMap.put(3, ElevatorState.CORAL_L3);
+    elevatorStateMap.put(4, ElevatorState.CORAL_L4);
+  }
+
+  public static ElevatorState toElevatorState(int level) {
+    return elevatorStateMap.get(level);
+  }
 
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
+
+  private ElevatorState setpoint;
+  private double setpointRad;
 
   private boolean elevatorSafetyEngaged;
 
@@ -59,11 +74,17 @@ public class Elevator extends ExtendedSubsystem {
       case MANUAL_CONTROL:
         break;
       default:
-        io.setPosition(SETPOINTS.get(setpoint));
+        Angle newSetpoint = SETPOINTS.get(newState);
+        io.setPosition(newSetpoint);
+        setpointRad = newSetpoint.in(Radians);
     }
 
     setpoint = newState;
     Logger.recordOutput("Elevator/ElevatorState", setpoint);
+  }
+
+  public boolean hasReachedSetpoint() {
+    return Math.abs(setpointRad - inputs.positionRad) < 0.06;
   }
 
   public Command homingSequence() {
@@ -94,14 +115,9 @@ public class Elevator extends ExtendedSubsystem {
             });
   }
 
-  public Command manualControl(DoubleSupplier joystick) {
-    return run(
-        () -> {
-          double magnitude = MathUtil.applyDeadband(joystick.getAsDouble(), OPERATOR_DEADBAND);
-          if (magnitude > 0.0) {
-            setState(ElevatorState.MANUAL_CONTROL);
-            io.setOpenLoop(magnitude * ElevatorConstants.MAX_MANUAL_VOLTAGE);
-          }
-        });
+  public Command manualControl(DoubleSupplier magnitude) {
+    return startRun(
+        () -> setState(ElevatorState.MANUAL_CONTROL),
+        () -> io.setOpenLoop(magnitude.getAsDouble() * ElevatorConstants.MAX_MANUAL_VOLTAGE));
   }
 }

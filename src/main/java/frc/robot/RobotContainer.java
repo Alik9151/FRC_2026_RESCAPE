@@ -11,6 +11,7 @@ import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L3;
 import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L4;
 import static frc.robot.subsystems.elevator.Elevator.ElevatorState.STOWED;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -37,16 +38,23 @@ import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorIO;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOTalonFX;
+import frc.robot.subsystems.intake.IntakeIOTalonFXSim;
+import frc.robot.subsystems.outtake.Outtake;
+import frc.robot.subsystems.outtake.OuttakeIO;
+import frc.robot.subsystems.outtake.OuttakeIOTalonFX;
+import frc.robot.subsystems.outtake.OuttakeIOTalonFXSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
 import frc.robot.subsystems.vision.VisionIOPhotonVisionSim;
 import frc.robot.util.BetterAutoChooser;
 import frc.robot.util.PhoenixUtil;
+import frc.robot.util.Reef;
 import frc.robot.util.RobotUtil;
-import frc.robot.util.reef.Reef;
-import frc.robot.util.reef.ReefConstants;
-import java.util.Set;
+import java.util.function.DoubleSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
@@ -64,9 +72,8 @@ public class RobotContainer {
   private final Drive drive;
   private final Vision vision;
   private final Elevator elevator;
-
-  // reef
-  private final Reef reef;
+  private final Intake intake;
+  private final Outtake outtake;
 
   // controllers
   private final CommandXboxController driverController =
@@ -95,6 +102,8 @@ public class RobotContainer {
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {});
         elevator = new Elevator(new ElevatorIOTalonFX());
+        intake = new Intake(new IntakeIOTalonFX());
+        outtake = new Outtake(new OuttakeIOTalonFX());
         break;
       case SIM:
         SimulatedArena.overrideInstance(new Arena2025Reefscape());
@@ -123,6 +132,8 @@ public class RobotContainer {
                     VisionConstants.robotToCamera1,
                     driveSimulation::getSimulatedDriveTrainPose));
         elevator = new Elevator(new ElevatorIOSim());
+        intake = new Intake(new IntakeIOTalonFXSim());
+        outtake = new Outtake(new OuttakeIOTalonFXSim());
         break;
       default:
         // replay
@@ -142,12 +153,15 @@ public class RobotContainer {
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {}, new VisionIO() {});
         elevator = new Elevator(new ElevatorIO() {});
+        intake = new Intake(new IntakeIO() {});
+        outtake = new Outtake(new OuttakeIO() {});
     }
-    reef =
+    Reef reef =
         new Reef(
             RobotUtil.isRedAlliance()
-                ? ReefConstants.RED_APRIL_TAGS
-                : ReefConstants.BLUE_APRIL_TAGS);
+                ? FieldConstants.RED_REEF_APRIL_TAGS
+                : FieldConstants.BLUE_REEF_APRIL_TAGS);
+    AutoControlCommands.setReef(reef);
     Logger.recordOutput("FieldElements/PolePositions", reef.getPoses());
     Logger.recordOutput(
         "FieldElements/LoadingPositions",
@@ -211,7 +225,6 @@ public class RobotContainer {
     Command zeroGyro = Commands.runOnce(() -> drive.zeroGyro(true), drive).ignoringDisable(true);
 
     // Elevator commands
-    Command defaultElevatorCommand = elevator.manualControl(() -> -operatorController.getLeftY());
     Command elevatorHoming = elevator.homingSequence();
     Command stowElevator = Commands.runOnce(() -> elevator.setState(STOWED));
     Command l1Coral = Commands.runOnce(() -> elevator.setState(CORAL_L1));
@@ -220,25 +233,24 @@ public class RobotContainer {
     Command l4Coral = Commands.runOnce(() -> elevator.setState(CORAL_L4));
 
     // Auto Drive Commands
-    Command driveToPole =
-        Commands.defer(() -> AutoControlCommands.driveToReef(drive::getPose, reef), Set.of(drive));
-
-    Command driveToLoading =
-        Commands.defer(
-            () -> AutoControlCommands.driveToLoading(drive::getPose, reef), Set.of(drive));
+    Command driveToPole = AutoControlCommands.driveToReef(drive);
+    Command driveToLoading = AutoControlCommands.driveToLoading(drive);
+    Command fullAuto = AutoControlCommands.fullAuto(drive, elevator, intake, outtake);
 
     drive.setDefaultCommand(defaultDriveCommand);
-    elevator.setDefaultCommand(defaultElevatorCommand);
+    // elevator override
+    DoubleSupplier elevatorJoystick =
+        () ->
+            -MathUtil.applyDeadband(
+                driverController.getLeftY(), ControllerConstants.OPERATOR_DEADBAND);
+    new Trigger(() -> elevatorJoystick.getAsDouble() != 0.0)
+        .whileTrue(elevator.manualControl(elevatorJoystick));
 
     if (Constants.currentMode == Constants.Mode.SIM) {
       CommandGenericHID keyboard = new CommandGenericHID(2);
       keyboard.button(1).onTrue(driveToPole);
       keyboard.button(2).onTrue(driveToLoading);
-      keyboard
-          .button(3)
-          .onTrue(
-              Commands.runOnce(
-                  () -> AutoControlCommands.autoControl = !AutoControlCommands.autoControl));
+      keyboard.button(3).toggleOnTrue(fullAuto);
     }
 
     if (DriverStation.isTest()) {

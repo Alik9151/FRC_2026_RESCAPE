@@ -16,17 +16,16 @@ import frc.robot.Constants.CANConstants;
 import frc.robot.util.PhoenixUtil;
 
 public class OuttakeIOTalonFX implements OuttakeIO {
-  private final TalonFX Outtake;
+  private final TalonFX outtake;
 
   private final VelocityVoltage velocityRequest = new VelocityVoltage(0);
 
-  // inputs from Outtake
   private final StatusSignal<Voltage> voltage;
   private final StatusSignal<Current> statorCurrent;
   private final StatusSignal<AngularVelocity> velocityRPS;
 
   public OuttakeIOTalonFX() {
-    Outtake = new TalonFX(CANConstants.OUTTAKE, CANConstants.SUPERSTRUCTURE_CAN_BUS);
+    outtake = new TalonFX(CANConstants.OUTTAKE, CANConstants.SUPERSTRUCTURE_CAN_BUS);
 
     TalonFXConfiguration OuttakeConfig = new TalonFXConfiguration();
 
@@ -43,14 +42,14 @@ public class OuttakeIOTalonFX implements OuttakeIO {
     OuttakeConfig.Slot0.kS = OuttakeConstants.OUTTAKE_KS;
     OuttakeConfig.Slot0.kV = OuttakeConstants.OUTTAKE_KV;
 
-    tryUntilOk(5, () -> Outtake.getConfigurator().apply(OuttakeConfig));
+    tryUntilOk(5, () -> outtake.getConfigurator().apply(OuttakeConfig));
 
-    voltage = Outtake.getMotorVoltage();
-    statorCurrent = Outtake.getStatorCurrent();
-    velocityRPS = Outtake.getVelocity();
+    voltage = outtake.getMotorVoltage();
+    statorCurrent = outtake.getStatorCurrent();
+    velocityRPS = outtake.getVelocity();
 
     BaseStatusSignal.setUpdateFrequencyForAll(100.0, voltage, statorCurrent, velocityRPS);
-    ParentDevice.optimizeBusUtilizationForAll(Outtake);
+    ParentDevice.optimizeBusUtilizationForAll(outtake);
 
     PhoenixUtil.registerSignals(
         CANConstants.SUPERSTRUCTURE_CAN_BUS, voltage, statorCurrent, velocityRPS);
@@ -66,11 +65,11 @@ public class OuttakeIOTalonFX implements OuttakeIO {
 
   @Override
   public void setVelocity(double rps) {
-    Outtake.setControl(velocityRequest.withVelocity(rps));
+    outtake.setControl(velocityRequest.withVelocity(rps));
   }
 
   @Override
   public void stop() {
-    Outtake.stopMotor();
+    outtake.stopMotor();
   }
 }

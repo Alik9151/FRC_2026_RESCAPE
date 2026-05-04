@@ -1,8 +1,9 @@
-package frc.robot.util.reef;
+package frc.robot.util;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import frc.robot.Constants;
 import frc.robot.subsystems.vision.VisionConstants;
 import java.util.Optional;
 
@@ -25,12 +26,14 @@ public class Reef {
     poles[tagNum * 2] =
         new Pole(
             new Pose2d(
-                tag.getTranslation().plus(ReefConstants.LEFT_OFFSET.rotateBy(tag.getRotation())),
+                tag.getTranslation()
+                    .plus(Constants.FieldConstants.LEFT_REEF_OFFSET.rotateBy(tag.getRotation())),
                 tag.getRotation()));
     poles[tagNum * 2 + 1] =
         new Pole(
             new Pose2d(
-                tag.getTranslation().plus(ReefConstants.RIGHT_OFFSET.rotateBy(tag.getRotation())),
+                tag.getTranslation()
+                    .plus(Constants.FieldConstants.RIGHT_REEF_OFFSET.rotateBy(tag.getRotation())),
                 tag.getRotation()));
   }
 
@@ -85,7 +88,7 @@ public class Reef {
       if (!levels[2]) maxLevel = 4;
       else if (!levels[1]) maxLevel = 3;
       else if (!levels[0]) maxLevel = 2;
-      else maxLevel = -1;
+      else maxLevel = 0;
     }
 
     public int getMaxLevel() {
