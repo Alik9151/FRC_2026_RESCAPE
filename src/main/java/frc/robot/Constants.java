@@ -59,6 +59,8 @@ public final class Constants {
     public static final Distance FIELD_WIDTH =
         Meters.of(VisionConstants.APRIL_TAG_LAYOUT.getFieldWidth());
 
+    public static final Translation2d LOADING_TRANSLATION2D = new Translation2d(0.5, 0);
+
     public static final Pose2d LOADING_STATION_LEFT_BLUE =
         VisionConstants.APRIL_TAG_LAYOUT.getTagPose(13).get().toPose2d();
     public static final Pose2d LOADING_STATION_RIGHT_BLUE =

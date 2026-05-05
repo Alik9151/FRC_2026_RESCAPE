@@ -75,6 +75,24 @@ public class AutoControlCommands {
       rightLoadingStation = FieldConstants.LOADING_STATION_RIGHT_BLUE;
     }
 
+    leftLoadingStation =
+        new Pose2d(
+            leftLoadingStation
+                .getTranslation()
+                .plus(
+                    FieldConstants.LOADING_TRANSLATION2D.rotateBy(
+                        leftLoadingStation.getRotation())),
+            leftLoadingStation.getRotation());
+
+    rightLoadingStation =
+        new Pose2d(
+            rightLoadingStation
+                .getTranslation()
+                .plus(
+                    FieldConstants.LOADING_TRANSLATION2D.rotateBy(
+                        rightLoadingStation.getRotation())),
+            rightLoadingStation.getRotation());
+
     double distL = robotPose.getSquaredDistance(leftLoadingStation.getTranslation());
     double distR = robotPose.getSquaredDistance(rightLoadingStation.getTranslation());
     if (distL < distR) return leftLoadingStation;

@@ -2,6 +2,7 @@ package frc.robot.util;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.Constants;
 import frc.robot.subsystems.vision.VisionConstants;
@@ -29,13 +30,13 @@ public class Reef {
             new Pose2d(
                 tag.getTranslation()
                     .plus(Constants.FieldConstants.LEFT_REEF_OFFSET.rotateBy(tag.getRotation())),
-                tag.getRotation()));
+                tag.getRotation().plus(Rotation2d.k180deg)));
     poles[tagNum * 2 + 1] =
         new Pole(
             new Pose2d(
                 tag.getTranslation()
                     .plus(Constants.FieldConstants.RIGHT_REEF_OFFSET.rotateBy(tag.getRotation())),
-                tag.getRotation()));
+                tag.getRotation().plus(Rotation2d.k180deg)));
   }
 
   public Pole getBestPole(Translation2d robotPose) {

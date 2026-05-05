@@ -7,6 +7,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.subsystems.elevator.Elevator;
 import java.util.function.Supplier;
+import org.dyn4j.geometry.Rectangle;
 import org.ironmaple.simulation.IntakeSimulation;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -27,16 +28,27 @@ public class SuperstructureSim {
     this.elevator = elevator;
     this.swerveDriveSimulation = swerveDriveSimulation;
     this.chassisSpeeds = chassisSpeeds;
+    // intakeSimulation =
+    //     IntakeSimulation.InTheFrameIntake(
+    //         // Specify the type of game pieces that the intake can collect
+    //         "Coral",
+    //         // Specify the drivetrain to which this intake is attached
+    //         swerveDriveSimulation,
+    //         // Width of the intake
+    //         Meters.of(0.7),
+    //         // The intake is mounted on the front side of the chassis
+    //         IntakeSimulation.IntakeSide.FRONT,
+    //         // The intake can hold up to 1 Coral
+    //         1);
+
     intakeSimulation =
-        IntakeSimulation.InTheFrameIntake(
+        new IntakeSimulation(
             // Specify the type of game pieces that the intake can collect
             "Coral",
             // Specify the drivetrain to which this intake is attached
             swerveDriveSimulation,
             // Width of the intake
-            Meters.of(0.7),
-            // The intake is mounted on the front side of the chassis
-            IntakeSimulation.IntakeSide.FRONT,
+            new Rectangle(0.7, 0.5),
             // The intake can hold up to 1 Coral
             1);
   }
