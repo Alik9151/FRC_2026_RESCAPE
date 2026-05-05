@@ -56,5 +56,9 @@ public final class ElevatorConstants {
 
   static {
     SETPOINTS.put(STOWED, distanceToAngle(0.0));
+    SETPOINTS.put(CORAL_L1, distanceToAngle(0.0));
+    SETPOINTS.put(CORAL_L2, distanceToAngle(0.0));
+    SETPOINTS.put(CORAL_L3, distanceToAngle(0.0));
+    SETPOINTS.put(CORAL_L4, distanceToAngle(0.0));
   }
 }

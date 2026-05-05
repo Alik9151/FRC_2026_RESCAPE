@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.Meters;
 
 import com.ctre.phoenix6.CANBus;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.units.measure.Distance;
 import edu.wpi.first.wpilibj.RobotBase;
 import frc.robot.subsystems.vision.VisionConstants;
@@ -47,6 +48,9 @@ public final class Constants {
 
     public static final int ELEVATOR_LEADER = 0;
     public static final int ELEVATOR_FOLLOWER = 0;
+
+    public static final int INTAKE = 0;
+    public static final int OUTTAKE = 0;
   }
 
   public static final class FieldConstants {
@@ -59,5 +63,16 @@ public final class Constants {
         VisionConstants.APRIL_TAG_LAYOUT.getTagPose(13).get().toPose2d();
     public static final Pose2d LOADING_STATION_RIGHT =
         VisionConstants.APRIL_TAG_LAYOUT.getTagPose(12).get().toPose2d();
+
+    private static final double REEF_ADJUST_X = 0.6;
+    private static final double REEF_ADJUST_Y = -0.3209;
+
+    public static final Translation2d LEFT_REEF_OFFSET =
+        new Translation2d(REEF_ADJUST_X, REEF_ADJUST_Y);
+    public static final Translation2d RIGHT_REEF_OFFSET =
+        new Translation2d(REEF_ADJUST_X, -REEF_ADJUST_Y);
+
+    public static final int[] BLUE_REEF_APRIL_TAGS = {17, 18, 19, 20, 21, 22};
+    public static final int[] RED_REEF_APRIL_TAGS = {};
   }
 }
