@@ -15,10 +15,6 @@ import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends ExtendedSubsystem {
-  public static Angle distanceToAngle(double meters) {
-    // fill in with real formula
-    return Radians.of(meters);
-  }
 
   public enum ElevatorState {
     STOWED,
@@ -119,5 +115,9 @@ public class Elevator extends ExtendedSubsystem {
     return startRun(
         () -> setState(ElevatorState.MANUAL_CONTROL),
         () -> io.setOpenLoop(magnitude.getAsDouble() * ElevatorConstants.MAX_MANUAL_VOLTAGE));
+  }
+
+  public double getPositionRad() {
+    return inputs.positionRad;
   }
 }

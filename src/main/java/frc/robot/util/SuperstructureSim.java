@@ -1,11 +1,17 @@
 package frc.robot.util;
 
 import static edu.wpi.first.units.Units.*;
+import static frc.robot.Constants.MAX_STAGE_ONE;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.subsystems.elevator.Elevator;
+import frc.robot.subsystems.elevator.ElevatorConstants;
 import java.util.function.Supplier;
 import org.dyn4j.geometry.Rectangle;
 import org.ironmaple.simulation.IntakeSimulation;
@@ -13,6 +19,7 @@ import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnFly;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnFly.CoralStationsSide;
+import org.littletonrobotics.junction.Logger;
 
 public class SuperstructureSim {
   private final Elevator elevator;
@@ -21,6 +28,8 @@ public class SuperstructureSim {
 
   private final IntakeSimulation intakeSimulation;
 
+  private double stage2Height;
+
   public SuperstructureSim(
       Elevator elevator,
       SwerveDriveSimulation swerveDriveSimulation,
@@ -28,18 +37,6 @@ public class SuperstructureSim {
     this.elevator = elevator;
     this.swerveDriveSimulation = swerveDriveSimulation;
     this.chassisSpeeds = chassisSpeeds;
-    // intakeSimulation =
-    //     IntakeSimulation.InTheFrameIntake(
-    //         // Specify the type of game pieces that the intake can collect
-    //         "Coral",
-    //         // Specify the drivetrain to which this intake is attached
-    //         swerveDriveSimulation,
-    //         // Width of the intake
-    //         Meters.of(0.7),
-    //         // The intake is mounted on the front side of the chassis
-    //         IntakeSimulation.IntakeSide.FRONT,
-    //         // The intake can hold up to 1 Coral
-    //         1);
 
     intakeSimulation =
         new IntakeSimulation(
@@ -54,7 +51,34 @@ public class SuperstructureSim {
   }
 
   public void simulationPeriodic() {
-    // todo
+    double carriageHeight = ElevatorConstants.radiansToMeters(elevator.getPositionRad());
+
+    double stage1Height = carriageHeight / 2.0;
+    stage2Height = carriageHeight;
+
+    stage1Height = MathUtil.clamp(stage1Height, 0.0, MAX_STAGE_ONE);
+
+    Logger.recordOutput(
+        "FieldSimulation/RobotComponentPositions",
+        new Pose3d(0.0, 0.0, stage1Height, Rotation3d.kZero),
+        new Pose3d(0.0, 0.0, stage2Height, Rotation3d.kZero));
+
+    if (isLoaded()) {
+      Pose2d simDrivePose = swerveDriveSimulation.getSimulatedDriveTrainPose();
+      Translation2d coralTranslation =
+          simDrivePose
+              .getTranslation()
+              .plus(new Translation2d(0.25, 0).rotateBy(simDrivePose.getRotation()));
+      Logger.recordOutput(
+          "FieldSimulation/CoralInBot",
+          new Pose3d(
+              coralTranslation.getX(),
+              coralTranslation.getY(),
+              stage2Height + 0.7,
+              new Rotation3d(simDrivePose.getRotation())));
+    } else {
+      Logger.recordOutput("FieldSimulation/CoralInBot", new Pose3d());
+    }
   }
 
   public void startIntake() {
@@ -77,12 +101,12 @@ public class SuperstructureSim {
     ReefscapeCoralOnFly coralOnFly =
         new ReefscapeCoralOnFly(
             swerveDriveSimulation.getSimulatedDriveTrainPose().getTranslation(),
-            Translation2d.kZero,
+            new Translation2d(.275, 0),
             chassisSpeeds.get(),
             swerveDriveSimulation.getSimulatedDriveTrainPose().getRotation(),
-            Meters.of(.45), // change to elevator state/height later
-            MetersPerSecond.of(1),
-            Degrees.of(65));
+            Meters.of(stage2Height + 0.7), // change to elevator state/height later
+            MetersPerSecond.of(0.75),
+            Degrees.of(-20));
 
     coralOnFly.enableBecomesGamePieceOnFieldAfterTouchGround();
 

@@ -325,6 +325,7 @@ public class RobotContainer {
   public void updateSimulation() {
     if (Constants.currentMode == Constants.Mode.REAL) return;
 
+    superstructureSim.simulationPeriodic();
     SimulatedArena.getInstance().simulationPeriodic();
     Pose3d[] CoralPoses = SimulatedArena.getInstance().getGamePiecesArrayByType("Coral");
     Pose3d[] AlgaePoses = SimulatedArena.getInstance().getGamePiecesArrayByType("Algae");
@@ -334,7 +335,7 @@ public class RobotContainer {
     // Publish to telemetry using AdvantageKit
     Logger.recordOutput("FieldSimulation/RobotPosition", simPose);
     // to set up the model
-    Logger.recordOutput("FieldSimulation/CoralPositions", CoralPoses);
-    Logger.recordOutput("FieldSimulation/AlgaePositions", AlgaePoses);
+    Logger.recordOutput("FieldSimulation/Coral", CoralPoses);
+    Logger.recordOutput("FieldSimulation/Algae", AlgaePoses);
   }
 }

@@ -15,7 +15,6 @@ public class Reef {
     poles = new Pole[tags.length * 2];
     for (int i = 0; i < tags.length; i++) {
       addBranchesFromTag(getTagPose2d(tags[i]), i);
-      System.out.println(tags[i]);
     }
   }
 

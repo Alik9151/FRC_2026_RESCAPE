@@ -1,6 +1,6 @@
 package frc.robot.subsystems.elevator;
 
-import static frc.robot.subsystems.elevator.ElevatorConstants.DRUM_RADIUS;
+import static frc.robot.subsystems.elevator.ElevatorConstants.metersToRadians;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -31,14 +31,14 @@ public class ElevatorIOSim implements ElevatorIO {
             0);
     elevatorPID =
         new PIDController(
-            ElevatorConstants.ELEVATOR_CONFIG.Slot0.kP * 400.0,
+            ElevatorConstants.ELEVATOR_CONFIG.Slot0.kP * 125.0,
             ElevatorConstants.ELEVATOR_CONFIG.Slot0.kI,
             ElevatorConstants.ELEVATOR_CONFIG.Slot0.kD);
   }
 
   public void updateInputs(ElevatorIOInputs inputs) {
     if (isClosedLoopElevator) {
-      elevatorVolts = elevatorPID.calculate(elevatorSim.getPositionMeters());
+      elevatorVolts = elevatorPID.calculate(inputs.positionRad);
     }
 
     elevatorVolts = MathUtil.clamp(elevatorVolts, -12.0, 12.0);
@@ -46,15 +46,14 @@ public class ElevatorIOSim implements ElevatorIO {
     elevatorSim.setInputVoltage(elevatorVolts);
     elevatorSim.update(0.02);
 
-    double positionRad = elevatorSim.getPositionMeters() / ElevatorConstants.DRUM_RADIUS;
-    double velocityRadPerSec =
-        elevatorSim.getVelocityMetersPerSecond() / ElevatorConstants.DRUM_RADIUS;
+    double positionMeters = elevatorSim.getPositionMeters();
 
     inputs.leaderConnected = true;
     inputs.followerConnected = true;
 
-    inputs.positionRad = positionRad;
-    inputs.velocityRadPerSec = velocityRadPerSec;
+    inputs.positionRad = metersToRadians(positionMeters);
+    inputs.velocityRadPerSec = metersToRadians(elevatorSim.getVelocityMetersPerSecond());
+    ;
 
     inputs.appliedVolts = elevatorVolts;
     inputs.statorCurrentAmps = elevatorSim.getCurrentDrawAmps();
@@ -77,7 +76,7 @@ public class ElevatorIOSim implements ElevatorIO {
 
   public void setPosition(double positionRad) {
     isClosedLoopElevator = true;
-    elevatorPID.setSetpoint(positionRad * DRUM_RADIUS);
+    elevatorPID.setSetpoint(positionRad);
   }
 
   public void setPosition(Angle position) {
@@ -91,6 +90,7 @@ public class ElevatorIOSim implements ElevatorIO {
 
   public void resetPosition(Angle newPosition) {
     elevatorSim.setState(newPosition.in(Units.Radians) * ElevatorConstants.DRUM_RADIUS, 0.0);
+    elevatorPID.reset();
   }
 
   public void setBrake(boolean brake) {}

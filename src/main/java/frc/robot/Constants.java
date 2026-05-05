@@ -36,6 +36,8 @@ public final class Constants {
     REPLAY
   }
 
+  public static final double MAX_STAGE_ONE = 1.5; // move this prolly
+
   public static final class ControllerConstants {
     public static final int DRIVER_CONTROLLER_PORT = 0;
     public static final int OPERATOR_CONTROLLER_PORT = 1;
@@ -70,8 +72,8 @@ public final class Constants {
     public static final Pose2d LOADING_STATION_RIGHT_RED =
         VisionConstants.APRIL_TAG_LAYOUT.getTagPose(2).get().toPose2d();
 
-    private static final double REEF_ADJUST_X = 0.6;
-    private static final double REEF_ADJUST_Y = -0.3209;
+    private static final double REEF_ADJUST_X = 0.4;
+    private static final double REEF_ADJUST_Y = -0.21; // 3209
 
     public static final Translation2d LEFT_REEF_OFFSET =
         new Translation2d(REEF_ADJUST_X, REEF_ADJUST_Y);
