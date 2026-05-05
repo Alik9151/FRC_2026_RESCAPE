@@ -1,5 +1,6 @@
 package frc.robot.subsystems.outtake;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -36,6 +37,8 @@ public class OuttakeIOSim extends OuttakeIOTalonFX {
     if (isClosedLoopOuttake) {
       outtakeVolts = outtakePID.calculate(flywheelSim.getAngularVelocityRPM());
     }
+
+    outtakeVolts = MathUtil.clamp(outtakeVolts, -12.0, 12.0);
 
     flywheelSim.setInput(outtakeVolts);
     flywheelSim.update(0.02);

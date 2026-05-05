@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
@@ -36,6 +37,8 @@ public class IntakeIOSim extends IntakeIOTalonFX {
     if (isClosedLoopIntake) {
       intakeVolts = intakePID.calculate(flywheelSim.getAngularVelocityRPM());
     }
+
+    intakeVolts = MathUtil.clamp(intakeVolts, -12.0, 12.0);
 
     flywheelSim.setInput(intakeVolts);
     flywheelSim.update(0.02);

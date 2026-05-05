@@ -134,7 +134,7 @@ public class AutoControlCommands {
         Commands.runOnce(drive::stopWithX),
         Commands.runOnce(
             () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
-        //  Commands.waitUntil(elevator::hasReachedSetpoint),
+        Commands.waitUntil(elevator::hasReachedSetpoint),
         Commands.runOnce(outtake::enable, outtake),
         Commands.waitUntil(() -> !outtake.hasGamePiece())
             .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())));
@@ -147,7 +147,7 @@ public class AutoControlCommands {
         Commands.runOnce(drive::stopWithX),
         Commands.runOnce(
             () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
-        //  Commands.waitUntil(elevator::hasReachedSetpoint),
+        Commands.waitUntil(elevator::hasReachedSetpoint),
         Commands.runOnce(outtake::enable, outtake),
         Commands.waitUntil(() -> !outtake.hasGamePiece())
             .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())),

@@ -19,6 +19,11 @@ public final class ElevatorConstants {
 
   public static final double ELEVATOR_GEAR_RATIO = 75;
 
+  // sim stuff
+  public static final double CARRIGE_MASS = 15;
+  public static final double DRUM_RADIUS = 0.2;
+  public static final double MAX_HEIGHT = 3;
+
   public static final TalonFXConfiguration ELEVATOR_CONFIG =
       new TalonFXConfiguration()
           .withCurrentLimits(
@@ -55,10 +60,10 @@ public final class ElevatorConstants {
   public static final Map<Elevator.ElevatorState, Angle> SETPOINTS = new HashMap<>();
 
   static {
-    SETPOINTS.put(STOWED, distanceToAngle(0.0));
-    SETPOINTS.put(CORAL_L1, distanceToAngle(0.0));
-    SETPOINTS.put(CORAL_L2, distanceToAngle(0.0));
-    SETPOINTS.put(CORAL_L3, distanceToAngle(0.0));
-    SETPOINTS.put(CORAL_L4, distanceToAngle(0.0));
+    SETPOINTS.put(STOWED, distanceToAngle(0));
+    SETPOINTS.put(CORAL_L1, distanceToAngle(1));
+    SETPOINTS.put(CORAL_L2, distanceToAngle(1.5));
+    SETPOINTS.put(CORAL_L3, distanceToAngle(2));
+    SETPOINTS.put(CORAL_L4, distanceToAngle(2.5));
   }
 }
