@@ -41,11 +41,11 @@ import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOTalonFX;
-import frc.robot.subsystems.intake.IntakeIOTalonFXSim;
+import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.outtake.Outtake;
 import frc.robot.subsystems.outtake.OuttakeIO;
 import frc.robot.subsystems.outtake.OuttakeIOTalonFX;
-import frc.robot.subsystems.outtake.OuttakeIOTalonFXSim;
+import frc.robot.subsystems.outtake.OuttakeIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
@@ -132,8 +132,8 @@ public class RobotContainer {
                     VisionConstants.robotToCamera1,
                     driveSimulation::getSimulatedDriveTrainPose));
         elevator = new Elevator(new ElevatorIOSim());
-        intake = new Intake(new IntakeIOTalonFXSim());
-        outtake = new Outtake(new OuttakeIOTalonFXSim());
+        intake = new Intake(new IntakeIOSim());
+        outtake = new Outtake(new OuttakeIOSim());
         break;
       default:
         // replay
