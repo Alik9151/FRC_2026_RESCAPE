@@ -7,7 +7,7 @@ public final class IntakeConstants {
   public static final int INTAKE_SUPPLY_LIMIT = 40;
 
   public static final InvertedValue INTAKE_INVERTED = InvertedValue.CounterClockwise_Positive;
-  public static final double INTAKE_MOI = 0.001;
+  public static final double INTAKE_MOI = 0.05;
   public static final double INTAKE_GEAR_RATIO = 1;
 
   public static final double INTAKE_KP = 0.1;

@@ -4,17 +4,20 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import frc.robot.util.SuperstructureSim;
 
 public class OuttakeIOSim extends OuttakeIOTalonFX {
-    private final FlywheelSim flywheelSim;
+  private final SuperstructureSim superstructureSim;
+  private final FlywheelSim flywheelSim;
 
   private final PIDController outtakePID;
 
   private double outtakeVolts;
   private boolean isClosedLoopOuttake;
 
+  public OuttakeIOSim(SuperstructureSim sim) {
+    this.superstructureSim = sim;
 
-  public OuttakeIOSim() {
     flywheelSim =
         new FlywheelSim(
             LinearSystemId.createFlywheelSystem(
@@ -22,12 +25,11 @@ public class OuttakeIOSim extends OuttakeIOTalonFX {
                 OuttakeConstants.OUTTAKE_MOI,
                 OuttakeConstants.OUTTAKE_GEAR_RATIO),
             DCMotor.getKrakenX60(1));
-    outtakePID = new PIDController(
-      OuttakeConstants.OUTTAKE_KP * 125.0,
-      OuttakeConstants.OUTTAKE_KI,
-      OuttakeConstants.OUTTAKE_KD
-    );
-
+    outtakePID =
+        new PIDController(
+            OuttakeConstants.OUTTAKE_KP * 125.0,
+            OuttakeConstants.OUTTAKE_KI,
+            OuttakeConstants.OUTTAKE_KD);
   }
 
   public void updateInputs(OuttakeIOInputs inputs) {
@@ -42,12 +44,15 @@ public class OuttakeIOSim extends OuttakeIOTalonFX {
     inputs.appliedVolts = outtakeVolts;
     inputs.statorCurrentAmps = flywheelSim.getCurrentDrawAmps();
     inputs.velocityRPS = flywheelSim.getAngularVelocityRPM() / 60.0;
+
+    inputs.isLoaded = superstructureSim.isLoaded();
   }
 
   /** Sets the motor's speed given an RPS input */
   public void setVelocity(double rps) {
     isClosedLoopOuttake = true;
     outtakePID.setSetpoint(rps * 60.0);
+    if (rps == OuttakeConstants.OUTTAKE_RPS) superstructureSim.scoreFuel();
   }
 
   /** Stop the motor */

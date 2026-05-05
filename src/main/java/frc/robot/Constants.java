@@ -59,10 +59,14 @@ public final class Constants {
     public static final Distance FIELD_WIDTH =
         Meters.of(VisionConstants.APRIL_TAG_LAYOUT.getFieldWidth());
 
-    public static final Pose2d LOADING_STATION_LEFT =
+    public static final Pose2d LOADING_STATION_LEFT_BLUE =
         VisionConstants.APRIL_TAG_LAYOUT.getTagPose(13).get().toPose2d();
-    public static final Pose2d LOADING_STATION_RIGHT =
+    public static final Pose2d LOADING_STATION_RIGHT_BLUE =
         VisionConstants.APRIL_TAG_LAYOUT.getTagPose(12).get().toPose2d();
+    public static final Pose2d LOADING_STATION_LEFT_RED =
+        VisionConstants.APRIL_TAG_LAYOUT.getTagPose(1).get().toPose2d();
+    public static final Pose2d LOADING_STATION_RIGHT_RED =
+        VisionConstants.APRIL_TAG_LAYOUT.getTagPose(2).get().toPose2d();
 
     private static final double REEF_ADJUST_X = 0.6;
     private static final double REEF_ADJUST_Y = -0.3209;
@@ -73,6 +77,6 @@ public final class Constants {
         new Translation2d(REEF_ADJUST_X, -REEF_ADJUST_Y);
 
     public static final int[] BLUE_REEF_APRIL_TAGS = {17, 18, 19, 20, 21, 22};
-    public static final int[] RED_REEF_APRIL_TAGS = {};
+    public static final int[] RED_REEF_APRIL_TAGS = {6, 7, 8, 9, 10, 11};
   }
 }

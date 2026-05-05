@@ -4,9 +4,10 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.FlywheelSim;
+import frc.robot.util.SuperstructureSim;
 
 public class IntakeIOSim extends IntakeIOTalonFX {
-
+  private final SuperstructureSim superstructureSim;
   private final FlywheelSim flywheelSim;
 
   private final PIDController intakePID;
@@ -14,8 +15,9 @@ public class IntakeIOSim extends IntakeIOTalonFX {
   private double intakeVolts;
   private boolean isClosedLoopIntake;
 
+  public IntakeIOSim(SuperstructureSim sim) {
+    this.superstructureSim = sim;
 
-  public IntakeIOSim() {
     flywheelSim =
         new FlywheelSim(
             LinearSystemId.createFlywheelSystem(
@@ -23,12 +25,11 @@ public class IntakeIOSim extends IntakeIOTalonFX {
                 IntakeConstants.INTAKE_MOI,
                 IntakeConstants.INTAKE_GEAR_RATIO),
             DCMotor.getKrakenX60(1));
-    intakePID = new PIDController(
-      IntakeConstants.INTAKE_KP * 125.0,
-      IntakeConstants.INTAKE_KI,
-      IntakeConstants.INTAKE_KD
-    );
-
+    intakePID =
+        new PIDController(
+            IntakeConstants.INTAKE_KP * 125.0,
+            IntakeConstants.INTAKE_KI,
+            IntakeConstants.INTAKE_KD);
   }
 
   public void updateInputs(IntakeIOInputs inputs) {
@@ -49,11 +50,15 @@ public class IntakeIOSim extends IntakeIOTalonFX {
   public void setVelocity(double rps) {
     isClosedLoopIntake = true;
     intakePID.setSetpoint(rps * 60.0);
+
+    if (rps == IntakeConstants.INTAKE_RPS) superstructureSim.startIntake();
+    else superstructureSim.stopIntake();
   }
 
   /** Stop the motor */
   public void stop() {
     isClosedLoopIntake = false;
     intakeVolts = 0.0;
+    superstructureSim.stopIntake();
   }
 }
