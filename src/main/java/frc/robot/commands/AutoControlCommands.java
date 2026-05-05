@@ -15,16 +15,28 @@ import frc.robot.subsystems.outtake.Outtake;
 import frc.robot.util.Reef;
 import frc.robot.util.Reef.Pole;
 import java.util.Set;
+import lombok.Getter;
+import lombok.Setter;
+import org.littletonrobotics.junction.Logger;
 
 public class AutoControlCommands {
+  public enum AutoState {
+    IDLE,
+    LOADING_START,
+    SCORING_START,
+    OVERRIDDEN
+  }
+
   public static final PathConstraints constraints =
       new PathConstraints(2.0, 3.0, Units.degreesToRadians(540), Units.degreesToRadians(720));
 
-  private static Reef reef;
+  @Getter private static AutoState state = AutoState.IDLE;
+  @Setter private static Reef reef;
   private static Pole currentPole;
 
-  public static void setReef(Reef newReef) {
-    reef = newReef;
+  public static void setState(AutoState newState) {
+    state = newState;
+    Logger.recordOutput("AutoControl/State", state);
   }
 
   public static Command driveToReef(Drive drive) {
@@ -60,15 +72,38 @@ public class AutoControlCommands {
   }
 
   public static Command fullAuto(Drive drive, Elevator elevator, Intake intake, Outtake outtake) {
+    Command startWithLoad = cycleFromLoad(drive, elevator, intake, outtake);
+    Command startWithReef = cycleFromReef(drive, elevator, intake, outtake);
+    return Commands.deferredProxy(
+            () -> {
+              switch (state) {
+                case LOADING_START:
+                  return startWithLoad;
+                case SCORING_START:
+                  return startWithReef;
+                default:
+                  if (outtake.hasGamePiece()) {
+                    setState(AutoState.SCORING_START);
+                    return startWithReef;
+                  }
+                  setState(AutoState.LOADING_START);
+                  return startWithLoad;
+              }
+            })
+        .finallyDo(() -> setState(AutoState.IDLE));
+  }
+
+  private static Command cycleFromLoad(
+      Drive drive, Elevator elevator, Intake intake, Outtake outtake) {
     //    return Commands.repeatingSequence(
-    //        Commands.parallel(
-    //            Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED),
-    // elevator),
-    //            driveToLoading(drive)),
+    //        Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
+    //        driveToLoading(drive),
+    //        Commands.runOnce(drive::stopWithX),
     //        Commands.runOnce(intake::enable, intake),
     //        Commands.waitUntil(outtake::hasGamePiece),
     //        Commands.runOnce(intake::stop, intake),
     //        driveToReef(drive),
+    //        Commands.runOnce(drive::stopWithX),
     //        Commands.runOnce(
     //            () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
     //        Commands.waitUntil(elevator::hasReachedSetpoint),
@@ -76,9 +111,8 @@ public class AutoControlCommands {
     //        Commands.waitUntil(() -> !outtake.hasGamePiece())
     //            .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())));
     return Commands.repeatingSequence(
-        Commands.parallel(
-            Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
-            driveToLoading(drive)),
+        Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
+        driveToLoading(drive),
         Commands.runOnce(intake::enable, intake),
         Commands.runOnce(intake::stop, intake),
         driveToReef(drive),
@@ -86,5 +120,34 @@ public class AutoControlCommands {
             () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
         Commands.runOnce(outtake::enable, outtake),
         Commands.runOnce(() -> currentPole.updateLevel(currentPole.getMaxLevel())));
+  }
+
+  private static Command cycleFromReef(
+      Drive drive, Elevator elevator, Intake intake, Outtake outtake) {
+    //    return Commands.repeatingSequence(
+    //        driveToReef(drive),
+    //        Commands.runOnce(drive::stopWithX),
+    //        Commands.runOnce(
+    //            () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
+    //        Commands.waitUntil(elevator::hasReachedSetpoint),
+    //        Commands.runOnce(outtake::enable, outtake),
+    //        Commands.waitUntil(() -> !outtake.hasGamePiece())
+    //            .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())),
+    //        Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
+    //        driveToLoading(drive),
+    //        Commands.runOnce(drive::stopWithX),
+    //        Commands.runOnce(intake::enable, intake),
+    //        Commands.waitUntil(outtake::hasGamePiece),
+    //        Commands.runOnce(intake::stop, intake));
+    return Commands.repeatingSequence(
+        driveToReef(drive),
+        Commands.runOnce(
+            () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
+        Commands.runOnce(outtake::enable, outtake),
+        Commands.runOnce(() -> currentPole.updateLevel(currentPole.getMaxLevel())),
+        Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
+        driveToLoading(drive),
+        Commands.runOnce(intake::enable, intake),
+        Commands.runOnce(intake::stop, intake));
   }
 }

@@ -238,11 +238,27 @@ public class RobotContainer {
     Command fullAuto = AutoControlCommands.fullAuto(drive, elevator, intake, outtake);
 
     drive.setDefaultCommand(defaultDriveCommand);
+    // drive override
+    new Trigger(
+            () ->
+                AutoControlCommands.getState() != AutoControlCommands.AutoState.IDLE
+                    && (MathUtil.applyDeadband(
+                                driverController.getLeftY(), ControllerConstants.DRIVER_DEADBAND)
+                            != 0.0
+                        || MathUtil.applyDeadband(
+                                driverController.getLeftX(), ControllerConstants.DRIVER_DEADBAND)
+                            != 0.0))
+        .debounce(0.2)
+        .onTrue(
+            Commands.runOnce(fullAuto::cancel)
+                .andThen(
+                    () -> AutoControlCommands.setState(AutoControlCommands.AutoState.OVERRIDDEN)))
+        .onFalse(fullAuto);
     // elevator override
     DoubleSupplier elevatorJoystick =
         () ->
             -MathUtil.applyDeadband(
-                driverController.getLeftY(), ControllerConstants.OPERATOR_DEADBAND);
+                operatorController.getLeftY(), ControllerConstants.OPERATOR_DEADBAND);
     new Trigger(() -> elevatorJoystick.getAsDouble() != 0.0)
         .whileTrue(elevator.manualControl(elevatorJoystick));
 
