@@ -18,6 +18,7 @@ public final class ElevatorConstants {
   public static final NeutralModeValue ELEVATOR_NEUTRAL_OUTPUT = NeutralModeValue.Coast;
 
   public static final double ELEVATOR_GEAR_RATIO = 75;
+  public static final double ELEVATOR_MASS_KG = 18;
 
   public static final TalonFXConfiguration ELEVATOR_CONFIG =
       new TalonFXConfiguration()
@@ -48,9 +49,10 @@ public final class ElevatorConstants {
     ELEVATOR_CONFIG.Feedback.SensorToMechanismRatio = ELEVATOR_GEAR_RATIO;
   }
 
+  public static final double MAX_HEIGHT = 2;
   public static final double MAX_MANUAL_VOLTAGE = 6.0;
   public static final double HOMING_VOLTAGE = 2.0;
-  public static final double HOMING_VELOCITY_THRESHOLD = 5.0;
+  public static final double HOMING_VELOCITY_THRESHOLD = 0.1;
 
   public static final Map<Elevator.ElevatorState, Angle> SETPOINTS = new HashMap<>();
 
