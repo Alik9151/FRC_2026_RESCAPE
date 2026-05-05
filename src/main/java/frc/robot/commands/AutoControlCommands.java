@@ -120,16 +120,6 @@ public class AutoControlCommands {
         Commands.runOnce(outtake::enable, outtake),
         Commands.waitUntil(() -> !outtake.hasGamePiece())
             .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())));
-    // return Commands.repeatingSequence(
-    //     Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
-    //     driveToLoading(drive),
-    //     Commands.runOnce(intake::enable, intake),
-    //     Commands.runOnce(intake::stop, intake),
-    //     driveToReef(drive),
-    //     Commands.runOnce(
-    //         () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
-    //     Commands.runOnce(outtake::enable, outtake),
-    //     Commands.runOnce(() -> currentPole.updateLevel(currentPole.getMaxLevel())));
   }
 
   private static Command cycleFromReef(
@@ -149,15 +139,5 @@ public class AutoControlCommands {
         Commands.runOnce(intake::enable, intake),
         Commands.waitUntil(outtake::hasGamePiece),
         Commands.runOnce(intake::stop, intake));
-    //   return Commands.repeatingSequence(
-    //       driveToReef(drive),
-    //       Commands.runOnce(
-    //           () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
-    //       Commands.runOnce(outtake::enable, outtake),
-    //       Commands.runOnce(() -> currentPole.updateLevel(currentPole.getMaxLevel())),
-    //       Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
-    //       driveToLoading(drive),
-    //       Commands.runOnce(intake::enable, intake),
-    //       Commands.runOnce(intake::stop, intake));
   }
 }
