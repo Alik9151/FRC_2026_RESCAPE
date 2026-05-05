@@ -40,12 +40,12 @@ import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.intake.IntakeIOTalonFX;
-import frc.robot.subsystems.intake.IntakeIOTalonFXSim;
 import frc.robot.subsystems.outtake.Outtake;
 import frc.robot.subsystems.outtake.OuttakeIO;
+import frc.robot.subsystems.outtake.OuttakeIOSim;
 import frc.robot.subsystems.outtake.OuttakeIOTalonFX;
-import frc.robot.subsystems.outtake.OuttakeIOTalonFXSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
@@ -54,10 +54,12 @@ import frc.robot.util.BetterAutoChooser;
 import frc.robot.util.PhoenixUtil;
 import frc.robot.util.Reef;
 import frc.robot.util.RobotUtil;
+import frc.robot.util.SuperstructureSim;
 import java.util.function.DoubleSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.seasonspecific.reefscape2025.Arena2025Reefscape;
+import org.ironmaple.simulation.seasonspecific.reefscape2025.ReefscapeCoralOnFly.CoralStationsSide;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -87,6 +89,7 @@ public class RobotContainer {
 
   // Simulated things
   private SwerveDriveSimulation driveSimulation;
+  private SuperstructureSim superstructureSim;
 
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
@@ -131,9 +134,12 @@ public class RobotContainer {
                     VisionConstants.CAMERA_1_NAME,
                     VisionConstants.robotToCamera1,
                     driveSimulation::getSimulatedDriveTrainPose));
+
         elevator = new Elevator(new ElevatorIOSim());
-        intake = new Intake(new IntakeIOTalonFXSim());
-        outtake = new Outtake(new OuttakeIOTalonFXSim());
+        superstructureSim =
+            new SuperstructureSim(elevator, driveSimulation, drive::getChassisSpeeds);
+        intake = new Intake(new IntakeIOSim(superstructureSim));
+        outtake = new Outtake(new OuttakeIOSim(superstructureSim));
         break;
       default:
         // replay
@@ -153,20 +159,32 @@ public class RobotContainer {
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {}, new VisionIO() {});
         elevator = new Elevator(new ElevatorIO() {});
+        superstructureSim =
+            new SuperstructureSim(elevator, driveSimulation, drive::getChassisSpeeds);
         intake = new Intake(new IntakeIO() {});
         outtake = new Outtake(new OuttakeIO() {});
     }
-    Reef reef =
-        new Reef(
-            RobotUtil.isRedAlliance()
-                ? FieldConstants.RED_REEF_APRIL_TAGS
-                : FieldConstants.BLUE_REEF_APRIL_TAGS);
-    AutoControlCommands.setReef(reef);
-    Logger.recordOutput("FieldElements/PolePositions", reef.getPoses());
+    // temporary initial default value
+    AutoControlCommands.setReef(new Reef(FieldConstants.BLUE_REEF_APRIL_TAGS));
     Logger.recordOutput(
         "FieldElements/LoadingPositions",
-        FieldConstants.LOADING_STATION_LEFT,
-        FieldConstants.LOADING_STATION_RIGHT);
+        FieldConstants.LOADING_STATION_LEFT_RED,
+        FieldConstants.LOADING_STATION_RIGHT_RED,
+        FieldConstants.LOADING_STATION_LEFT_BLUE,
+        FieldConstants.LOADING_STATION_RIGHT_BLUE);
+    // set real reef once driver station initialized
+    new Thread(
+            () -> {
+              RobotUtil.waitForAlliance();
+              Reef reef =
+                  new Reef(
+                      RobotUtil.isRedAlliance()
+                          ? FieldConstants.RED_REEF_APRIL_TAGS
+                          : FieldConstants.BLUE_REEF_APRIL_TAGS);
+              AutoControlCommands.setReef(reef);
+              Logger.recordOutput("FieldElements/PolePositions", reef.getPoses());
+            })
+        .start();
 
     PhoenixUtil.startTelemetry();
 
@@ -267,6 +285,14 @@ public class RobotContainer {
       keyboard.button(1).onTrue(driveToPole);
       keyboard.button(2).onTrue(driveToLoading);
       keyboard.button(3).toggleOnTrue(fullAuto);
+      keyboard
+          .button(4)
+          .onTrue(
+              Commands.runOnce(() -> superstructureSim.loadFuel(CoralStationsSide.LEFT_STATION)));
+      keyboard
+          .button(5)
+          .onTrue(
+              Commands.runOnce(() -> superstructureSim.loadFuel(CoralStationsSide.RIGHT_STATION)));
     }
 
     if (DriverStation.isTest()) {

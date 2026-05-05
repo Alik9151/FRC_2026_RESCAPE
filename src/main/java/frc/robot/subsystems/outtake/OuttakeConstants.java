@@ -8,6 +8,7 @@ public final class OuttakeConstants {
 
   public static final InvertedValue OUTTAKE_INVERTED = InvertedValue.CounterClockwise_Positive;
   public static final double OUTTAKE_MOI = 0.001;
+  public static final double OUTTAKE_GEAR_RATIO = 1.0;
 
   public static final double OUTTAKE_KP = 0.1;
   public static final double OUTTAKE_KI = 0;

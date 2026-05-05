@@ -23,6 +23,16 @@ public final class RobotUtil {
     return alliance.isPresent() && alliance.get() == DriverStation.Alliance.Red;
   }
 
+  public static void waitForAlliance() {
+    while (!DriverStation.getAlliance().isPresent()) {
+      try {
+        Thread.sleep(20L);
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+    }
+  }
+
   /** Instantiate the Xbox controllers. */
   public static void setDriverController(CommandXboxController driverControllerInstance) {
     driverController = driverControllerInstance;

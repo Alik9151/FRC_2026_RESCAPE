@@ -14,6 +14,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.outtake.Outtake;
 import frc.robot.util.Reef;
 import frc.robot.util.Reef.Pole;
+import frc.robot.util.RobotUtil;
 import java.util.Set;
 import lombok.Getter;
 import lombok.Setter;
@@ -63,12 +64,21 @@ public class AutoControlCommands {
   }
 
   private static Pose2d getClosestLoader(Translation2d robotPose) {
-    double distL =
-        robotPose.getSquaredDistance(FieldConstants.LOADING_STATION_LEFT.getTranslation());
-    double distR =
-        robotPose.getSquaredDistance(FieldConstants.LOADING_STATION_RIGHT.getTranslation());
-    if (distL < distR) return FieldConstants.LOADING_STATION_LEFT;
-    return FieldConstants.LOADING_STATION_RIGHT;
+    Pose2d leftLoadingStation;
+    Pose2d rightLoadingStation;
+
+    if (RobotUtil.isRedAlliance()) {
+      leftLoadingStation = FieldConstants.LOADING_STATION_LEFT_RED;
+      rightLoadingStation = FieldConstants.LOADING_STATION_RIGHT_RED;
+    } else {
+      leftLoadingStation = FieldConstants.LOADING_STATION_LEFT_BLUE;
+      rightLoadingStation = FieldConstants.LOADING_STATION_RIGHT_BLUE;
+    }
+
+    double distL = robotPose.getSquaredDistance(leftLoadingStation.getTranslation());
+    double distR = robotPose.getSquaredDistance(rightLoadingStation.getTranslation());
+    if (distL < distR) return leftLoadingStation;
+    return rightLoadingStation;
   }
 
   public static Command fullAuto(Drive drive, Elevator elevator, Intake intake, Outtake outtake) {
@@ -95,59 +105,39 @@ public class AutoControlCommands {
 
   private static Command cycleFromLoad(
       Drive drive, Elevator elevator, Intake intake, Outtake outtake) {
-    //    return Commands.repeatingSequence(
-    //        Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
-    //        driveToLoading(drive),
-    //        Commands.runOnce(drive::stopWithX),
-    //        Commands.runOnce(intake::enable, intake),
-    //        Commands.waitUntil(outtake::hasGamePiece),
-    //        Commands.runOnce(intake::stop, intake),
-    //        driveToReef(drive),
-    //        Commands.runOnce(drive::stopWithX),
-    //        Commands.runOnce(
-    //            () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
-    //        Commands.waitUntil(elevator::hasReachedSetpoint),
-    //        Commands.runOnce(outtake::enable, outtake),
-    //        Commands.waitUntil(() -> !outtake.hasGamePiece())
-    //            .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())));
     return Commands.repeatingSequence(
         Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
         driveToLoading(drive),
+        Commands.runOnce(drive::stopWithX),
         Commands.runOnce(intake::enable, intake),
+        Commands.waitUntil(outtake::hasGamePiece),
         Commands.runOnce(intake::stop, intake),
         driveToReef(drive),
+        Commands.runOnce(drive::stopWithX),
         Commands.runOnce(
             () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
+        //  Commands.waitUntil(elevator::hasReachedSetpoint),
         Commands.runOnce(outtake::enable, outtake),
-        Commands.runOnce(() -> currentPole.updateLevel(currentPole.getMaxLevel())));
+        Commands.waitUntil(() -> !outtake.hasGamePiece())
+            .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())));
   }
 
   private static Command cycleFromReef(
       Drive drive, Elevator elevator, Intake intake, Outtake outtake) {
-    //    return Commands.repeatingSequence(
-    //        driveToReef(drive),
-    //        Commands.runOnce(drive::stopWithX),
-    //        Commands.runOnce(
-    //            () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
-    //        Commands.waitUntil(elevator::hasReachedSetpoint),
-    //        Commands.runOnce(outtake::enable, outtake),
-    //        Commands.waitUntil(() -> !outtake.hasGamePiece())
-    //            .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())),
-    //        Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
-    //        driveToLoading(drive),
-    //        Commands.runOnce(drive::stopWithX),
-    //        Commands.runOnce(intake::enable, intake),
-    //        Commands.waitUntil(outtake::hasGamePiece),
-    //        Commands.runOnce(intake::stop, intake));
     return Commands.repeatingSequence(
         driveToReef(drive),
+        Commands.runOnce(drive::stopWithX),
         Commands.runOnce(
             () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
+        //  Commands.waitUntil(elevator::hasReachedSetpoint),
         Commands.runOnce(outtake::enable, outtake),
-        Commands.runOnce(() -> currentPole.updateLevel(currentPole.getMaxLevel())),
+        Commands.waitUntil(() -> !outtake.hasGamePiece())
+            .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())),
         Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
         driveToLoading(drive),
+        Commands.runOnce(drive::stopWithX),
         Commands.runOnce(intake::enable, intake),
+        Commands.waitUntil(outtake::hasGamePiece),
         Commands.runOnce(intake::stop, intake));
   }
 }
