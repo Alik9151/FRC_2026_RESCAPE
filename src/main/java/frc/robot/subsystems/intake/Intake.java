@@ -41,4 +41,8 @@ public class Intake extends SubsystemBase {
   public Command reverseCommand() {
     return startEnd(this::reverse, this::stop);
   }
+
+  public double getVelocityRPS(){
+    return inputs.velocityRPS;
+  }
 }
