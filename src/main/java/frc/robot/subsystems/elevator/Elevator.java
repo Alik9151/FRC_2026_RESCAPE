@@ -89,6 +89,12 @@ public class Elevator extends ExtendedSubsystem {
         .finallyDo(() -> io.setOpenLoop(0));
   }
 
+  /**
+   * Run the elevator downwards at a constant voltage until its speed is near zero. At this point,
+   * it has reached the bottom and the encoder can be reset to zero.
+   *
+   * @return A command to home the elevator to recalibrate its position
+   */
   public Command homingSequence() {
     Debouncer homingDebouncer = new Debouncer(0.1);
     Timer homingTimer = new Timer();
@@ -117,6 +123,13 @@ public class Elevator extends ExtendedSubsystem {
             });
   }
 
+  /**
+   * Run the elevator at a voltage proportional to the magnitude supplied.
+   *
+   * @param magnitude Percentage of {@link ElevatorConstants#MAX_MANUAL_VOLTAGE} to run the elevator
+   *     at
+   * @return A command for manual open-loop control of the elevator
+   */
   public Command manualControl(DoubleSupplier magnitude) {
     return startRun(
         () -> setState(ElevatorState.MANUAL_CONTROL),

@@ -9,7 +9,6 @@ import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L1;
 import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L2;
 import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L3;
 import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L4;
-import static frc.robot.subsystems.elevator.Elevator.ElevatorState.STOWED;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
