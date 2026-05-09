@@ -1,7 +1,7 @@
 package frc.robot.util;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.Constants.MAX_STAGE_ONE;
+import static frc.robot.subsystems.elevator.ElevatorConstants.STAGE_1_MAX_HEIGHT;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -53,10 +53,8 @@ public class SuperstructureSim {
   public void simulationPeriodic() {
     double carriageHeight = ElevatorConstants.radiansToMeters(elevator.getPositionRad());
 
-    double stage1Height = carriageHeight / 2.0;
+    double stage1Height = MathUtil.clamp(carriageHeight / 2.0, 0.0, STAGE_1_MAX_HEIGHT);
     stage2Height = carriageHeight;
-
-    stage1Height = MathUtil.clamp(stage1Height, 0.0, MAX_STAGE_ONE);
 
     Logger.recordOutput(
         "FieldSimulation/RobotComponentPositions",

@@ -36,8 +36,6 @@ public final class Constants {
     REPLAY
   }
 
-  public static final double MAX_STAGE_ONE = 1.5; // move this prolly
-
   public static final class ControllerConstants {
     public static final int DRIVER_CONTROLLER_PORT = 0;
     public static final int OPERATOR_CONTROLLER_PORT = 1;

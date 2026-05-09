@@ -23,7 +23,7 @@ public class ElevatorIOSim implements ElevatorIO {
         new ElevatorSim(
             DCMotor.getKrakenX60(2),
             ElevatorConstants.ELEVATOR_GEAR_RATIO,
-            ElevatorConstants.CARRIGE_MASS,
+            ElevatorConstants.CARRIAGE_MASS,
             ElevatorConstants.DRUM_RADIUS,
             0,
             ElevatorConstants.MAX_HEIGHT,
@@ -53,7 +53,6 @@ public class ElevatorIOSim implements ElevatorIO {
 
     inputs.positionRad = metersToRadians(positionMeters);
     inputs.velocityRadPerSec = metersToRadians(elevatorSim.getVelocityMetersPerSecond());
-    ;
 
     inputs.appliedVolts = elevatorVolts;
     inputs.statorCurrentAmps = elevatorSim.getCurrentDrawAmps();

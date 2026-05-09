@@ -12,7 +12,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 public final class ElevatorConstants {
-
   public static double radiansToMeters(double radians) {
     return radians * DRUM_RADIUS;
   }
@@ -29,9 +28,10 @@ public final class ElevatorConstants {
   public static final double ELEVATOR_GEAR_RATIO = 75;
 
   // sim stuff
-  public static final double CARRIGE_MASS = 15;
+  public static final double CARRIAGE_MASS = 15;
   public static final double DRUM_RADIUS = 0.2;
   public static final double MAX_HEIGHT = 4;
+  public static final double STAGE_1_MAX_HEIGHT = 1.5;
 
   public static final TalonFXConfiguration ELEVATOR_CONFIG =
       new TalonFXConfiguration()

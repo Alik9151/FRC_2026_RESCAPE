@@ -243,6 +243,11 @@ public class RobotContainer {
     Command zeroGyro = Commands.runOnce(() -> drive.zeroGyro(true), drive).ignoringDisable(true);
 
     // Elevator commands
+    DoubleSupplier elevatorJoystick =
+        () ->
+            -MathUtil.applyDeadband(
+                operatorController.getLeftY(), ControllerConstants.OPERATOR_DEADBAND);
+    Command manualElevator = elevator.manualControl(elevatorJoystick);
     Command elevatorHoming = elevator.homingSequence();
     Command stowElevator = Commands.runOnce(() -> elevator.setState(STOWED));
     Command l1Coral = Commands.runOnce(() -> elevator.setState(CORAL_L1));
@@ -272,13 +277,9 @@ public class RobotContainer {
                 .andThen(
                     () -> AutoControlCommands.setState(AutoControlCommands.AutoState.OVERRIDDEN)))
         .onFalse(fullAuto);
+
     // elevator override
-    DoubleSupplier elevatorJoystick =
-        () ->
-            -MathUtil.applyDeadband(
-                operatorController.getLeftY(), ControllerConstants.OPERATOR_DEADBAND);
-    new Trigger(() -> elevatorJoystick.getAsDouble() != 0.0)
-        .whileTrue(elevator.manualControl(elevatorJoystick));
+    new Trigger(() -> elevatorJoystick.getAsDouble() != 0.0).whileTrue(manualElevator);
 
     if (Constants.currentMode == Constants.Mode.SIM) {
       CommandGenericHID keyboard = new CommandGenericHID(2);

@@ -9,13 +9,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.util.subsystems.ExtendedSubsystem;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends ExtendedSubsystem {
-
   public enum ElevatorState {
     STOWED,
     CORAL_L1,
@@ -26,18 +23,10 @@ public class Elevator extends ExtendedSubsystem {
     MANUAL_CONTROL
   }
 
-  private static final Map<Integer, ElevatorState> elevatorStateMap = new HashMap<>();
-
-  static {
-    elevatorStateMap.put(0, ElevatorState.STOWED);
-    elevatorStateMap.put(1, ElevatorState.CORAL_L1);
-    elevatorStateMap.put(2, ElevatorState.CORAL_L2);
-    elevatorStateMap.put(3, ElevatorState.CORAL_L3);
-    elevatorStateMap.put(4, ElevatorState.CORAL_L4);
-  }
+  private static final ElevatorState[] elevatorStates = ElevatorState.values();
 
   public static ElevatorState toElevatorState(int level) {
-    return elevatorStateMap.get(level);
+    return elevatorStates[level];
   }
 
   private final ElevatorIO io;
@@ -46,7 +35,7 @@ public class Elevator extends ExtendedSubsystem {
   private ElevatorState setpoint;
   private double setpointRad;
 
-  private boolean elevatorSafetyEngaged;
+  private boolean elevatorSafetyEngaged; // for future impl
 
   public Elevator(ElevatorIO io) {
     this.io = io;
