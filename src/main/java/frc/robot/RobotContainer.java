@@ -249,7 +249,7 @@ public class RobotContainer {
                 operatorController.getLeftY(), ControllerConstants.OPERATOR_DEADBAND);
     Command manualElevator = elevator.manualControl(elevatorJoystick);
     Command elevatorHoming = elevator.homingSequence();
-    Command stowElevator = Commands.runOnce(() -> elevator.setState(STOWED));
+    Command stowElevator = elevator.stow();
     Command l1Coral = Commands.runOnce(() -> elevator.setState(CORAL_L1));
     Command l2Coral = Commands.runOnce(() -> elevator.setState(CORAL_L2));
     Command l3Coral = Commands.runOnce(() -> elevator.setState(CORAL_L3));

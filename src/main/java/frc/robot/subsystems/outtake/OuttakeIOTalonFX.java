@@ -4,11 +4,9 @@ import static frc.robot.util.PhoenixUtil.*;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
-import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.AngularVelocity;
 import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Voltage;
@@ -27,22 +25,7 @@ public class OuttakeIOTalonFX implements OuttakeIO {
   public OuttakeIOTalonFX() {
     outtake = new TalonFX(CANConstants.OUTTAKE, CANConstants.SUPERSTRUCTURE_CAN_BUS);
 
-    TalonFXConfiguration OuttakeConfig = new TalonFXConfiguration();
-
-    OuttakeConfig.MotorOutput.Inverted = OuttakeConstants.OUTTAKE_INVERTED;
-    OuttakeConfig.MotorOutput.NeutralMode = NeutralModeValue.Coast;
-    OuttakeConfig.CurrentLimits.StatorCurrentLimit = OuttakeConstants.OUTTAKE_STATOR_LIMIT;
-    OuttakeConfig.CurrentLimits.SupplyCurrentLimit = OuttakeConstants.OUTTAKE_SUPPLY_LIMIT;
-    OuttakeConfig.CurrentLimits.StatorCurrentLimitEnable = true;
-    OuttakeConfig.CurrentLimits.SupplyCurrentLimitEnable = true;
-
-    OuttakeConfig.Slot0.kP = OuttakeConstants.OUTTAKE_KP;
-    OuttakeConfig.Slot0.kI = OuttakeConstants.OUTTAKE_KI;
-    OuttakeConfig.Slot0.kD = OuttakeConstants.OUTTAKE_KD;
-    OuttakeConfig.Slot0.kS = OuttakeConstants.OUTTAKE_KS;
-    OuttakeConfig.Slot0.kV = OuttakeConstants.OUTTAKE_KV;
-
-    tryUntilOk(5, () -> outtake.getConfigurator().apply(OuttakeConfig));
+    tryUntilOk(5, () -> outtake.getConfigurator().apply(OuttakeConstants.OUTTAKE_CONFIG));
 
     voltage = outtake.getMotorVoltage();
     statorCurrent = outtake.getStatorCurrent();

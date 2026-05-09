@@ -68,8 +68,25 @@ public class Elevator extends ExtendedSubsystem {
     Logger.recordOutput("Elevator/ElevatorState", setpoint);
   }
 
+  public double getPositionRad() {
+    return inputs.positionRad;
+  }
+
   public boolean hasReachedSetpoint() {
     return Math.abs(setpointRad - inputs.positionRad) < 0.06;
+  }
+
+  /**
+   * Allow the elevator to fully drop once it comes within tolerance of the stowed setpoint. This
+   * prevents the PID controller from constantly adjusting to maintain the setpoint while stowed.
+   *
+   * @return A command that stows the elevator then stops motors
+   */
+  public Command stow() {
+    return idle() // end in startEnd only works on interrupt
+        .beforeStarting(() -> setState(ElevatorState.STOWED))
+        .until(this::hasReachedSetpoint)
+        .finallyDo(() -> io.setOpenLoop(0));
   }
 
   public Command homingSequence() {
@@ -104,9 +121,5 @@ public class Elevator extends ExtendedSubsystem {
     return startRun(
         () -> setState(ElevatorState.MANUAL_CONTROL),
         () -> io.setOpenLoop(magnitude.getAsDouble() * ElevatorConstants.MAX_MANUAL_VOLTAGE));
-  }
-
-  public double getPositionRad() {
-    return inputs.positionRad;
   }
 }
