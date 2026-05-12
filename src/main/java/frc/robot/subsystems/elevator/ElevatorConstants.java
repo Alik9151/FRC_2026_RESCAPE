@@ -9,7 +9,6 @@ import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.units.measure.Angle;
-
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -64,13 +63,14 @@ public final class ElevatorConstants {
   public static final double HOMING_VOLTAGE = 2.0;
   public static final double HOMING_VELOCITY_THRESHOLD = 5.0;
 
-  public static final Map<Elevator.ElevatorState, Angle> SETPOINTS = new EnumMap<>(Elevator.ElevatorState.class);
+  public static final Map<Elevator.ElevatorState, Angle> SETPOINTS =
+      new EnumMap<>(Elevator.ElevatorState.class);
 
   static {
     SETPOINTS.put(STOWED, Radians.of(metersToRadians(0)));
     SETPOINTS.put(CORAL_L1, Radians.of(metersToRadians(0.2)));
     SETPOINTS.put(CORAL_L2, Radians.of(metersToRadians(0.5)));
     SETPOINTS.put(CORAL_L3, Radians.of(metersToRadians(.9)));
-    SETPOINTS.put(CORAL_L4, Radians.of(metersToRadians(1.5)));
+    SETPOINTS.put(CORAL_L4, Radians.of(metersToRadians(1.35)));
   }
 }

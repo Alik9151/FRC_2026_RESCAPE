@@ -28,7 +28,7 @@ public class AutoControlCommands {
     OVERRIDDEN
   }
 
-  public static final PathConstraints constraints =
+  public static final PathConstraints CONSTRAINTS =
       new PathConstraints(2.0, 3.0, Units.degreesToRadians(540), Units.degreesToRadians(720));
 
   @Getter private static AutoState state = AutoState.IDLE;
@@ -43,14 +43,18 @@ public class AutoControlCommands {
   public static Command driveToReef(Drive drive) {
     return Commands.defer(
         () -> {
-          Pose2d targetPose = updateCurrentPole(drive.getPose()).getPose2d();
-          return AutoBuilder.pathfindToPose(targetPose, constraints, 0.0);
+          Pose2d targetPose = updateCurrentPole(drive.getPose()).getPose();
+          Logger.recordOutput("AutoControl/TargetPose", targetPose);
+          Logger.recordOutput("AutoControl/CurrentTask", "SCORE");
+          return AutoBuilder.pathfindToPose(targetPose, CONSTRAINTS, 0.0);
         },
         Set.of(drive));
   }
 
   public static Pole updateCurrentPole(Pose2d currentPose) {
     currentPole = reef.getBestPole(currentPose.getTranslation());
+    Logger.recordOutput("AutoControl/CurrentBranch", currentPole.getPose());
+    Logger.recordOutput("AutoControl/ScoringLevel", currentPole.getMaxLevel());
     return currentPole;
   }
 
@@ -58,7 +62,9 @@ public class AutoControlCommands {
     return Commands.defer(
         () -> {
           Pose2d targetPose = getClosestLoader(drive.getPose().getTranslation());
-          return AutoBuilder.pathfindToPose(targetPose, constraints, 0.0);
+          Logger.recordOutput("AutoControl/TargetPose", targetPose);
+          Logger.recordOutput("AutoControl/CurrentTask", "LOAD");
+          return AutoBuilder.pathfindToPose(targetPose, CONSTRAINTS, 0.0);
         },
         Set.of(drive));
   }
@@ -80,8 +86,7 @@ public class AutoControlCommands {
             leftLoadingStation
                 .getTranslation()
                 .plus(
-                    FieldConstants.LOADING_TRANSLATION2D.rotateBy(
-                        leftLoadingStation.getRotation())),
+                    FieldConstants.LOADING_TRANSLATION.rotateBy(leftLoadingStation.getRotation())),
             leftLoadingStation.getRotation());
 
     rightLoadingStation =
@@ -89,8 +94,7 @@ public class AutoControlCommands {
             rightLoadingStation
                 .getTranslation()
                 .plus(
-                    FieldConstants.LOADING_TRANSLATION2D.rotateBy(
-                        rightLoadingStation.getRotation())),
+                    FieldConstants.LOADING_TRANSLATION.rotateBy(rightLoadingStation.getRotation())),
             rightLoadingStation.getRotation());
 
     double distL = robotPose.getSquaredDistance(leftLoadingStation.getTranslation());
