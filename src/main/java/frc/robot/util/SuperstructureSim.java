@@ -56,10 +56,13 @@ public class SuperstructureSim {
     double stage1Height = MathUtil.clamp(carriageHeight / 2.0, 0.0, STAGE_1_MAX_HEIGHT);
     stage2Height = carriageHeight;
 
+    // Logger.recordOutput("FieldSimulation/Tuning", new Pose3d(0.0, 0.0, 0.0, Rotation3d.kZero));
     Logger.recordOutput(
         "FieldSimulation/RobotComponentPositions",
         new Pose3d(0.0, 0.0, stage1Height, Rotation3d.kZero),
-        new Pose3d(0.0, 0.0, stage2Height, Rotation3d.kZero));
+        new Pose3d(0.0, 0.0, stage2Height, Rotation3d.kZero),
+        new Pose3d(-0.305, 0, 0.23, new Rotation3d(0, Math.toRadians(42.5), 0)),
+        new Pose3d(0.2, 0.0, 0.55 + stage2Height, Rotation3d.kZero));
 
     if (isLoaded()) {
       Pose2d simDrivePose = swerveDriveSimulation.getSimulatedDriveTrainPose();
