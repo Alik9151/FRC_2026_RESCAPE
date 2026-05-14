@@ -11,6 +11,7 @@ import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L3;
 import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L4;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -38,13 +39,9 @@ import frc.robot.subsystems.elevator.ElevatorIO;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.IntakeIO;
-import frc.robot.subsystems.intake.IntakeIOSim;
-import frc.robot.subsystems.intake.IntakeIOTalonFX;
 import frc.robot.subsystems.outtake.Outtake;
-import frc.robot.subsystems.outtake.OuttakeIO;
-import frc.robot.subsystems.outtake.OuttakeIOSim;
-import frc.robot.subsystems.outtake.OuttakeIOTalonFX;
+import frc.robot.subsystems.sensors.CoralSensorIOLaserCan;
+import frc.robot.subsystems.sensors.CoralSensorIOSim;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
@@ -104,8 +101,9 @@ public class RobotContainer {
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {});
         elevator = new Elevator(new ElevatorIOTalonFX());
-        intake = new Intake(new IntakeIOTalonFX());
-        outtake = new Outtake(new OuttakeIOTalonFX());
+        intake = new Intake();
+        outtake = new Outtake();
+        outtake.setSensor(new CoralSensorIOLaserCan(Constants.CANConstants.CORAL_SENSOR));
         break;
       case SIM:
         SimulatedArena.overrideInstance(new Arena2025Reefscape());
@@ -133,12 +131,13 @@ public class RobotContainer {
                     VisionConstants.CAMERA_1_NAME,
                     VisionConstants.robotToCamera1,
                     driveSimulation::getSimulatedDriveTrainPose));
-
         elevator = new Elevator(new ElevatorIOSim());
+        intake = new Intake();
+        outtake = new Outtake();
         superstructureSim =
-            new SuperstructureSim(elevator, driveSimulation, drive::getChassisSpeeds);
-        intake = new Intake(new IntakeIOSim(superstructureSim));
-        outtake = new Outtake(new OuttakeIOSim(superstructureSim));
+            new SuperstructureSim(
+                elevator, intake, outtake, driveSimulation, drive::getChassisSpeeds);
+        outtake.setSensor(new CoralSensorIOSim(superstructureSim));
         break;
       default:
         // replay
@@ -158,10 +157,11 @@ public class RobotContainer {
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {}, new VisionIO() {});
         elevator = new Elevator(new ElevatorIO() {});
+        intake = new Intake();
+        outtake = new Outtake();
         superstructureSim =
-            new SuperstructureSim(elevator, driveSimulation, drive::getChassisSpeeds);
-        intake = new Intake(new IntakeIO() {});
-        outtake = new Outtake(new OuttakeIO() {});
+            new SuperstructureSim(
+                elevator, intake, outtake, driveSimulation, drive::getChassisSpeeds);
     }
     // temporary initial default value
     AutoControlCommands.setReef(new Reef(FieldConstants.BLUE_REEF_APRIL_TAGS));
@@ -276,7 +276,7 @@ public class RobotContainer {
                         || MathUtil.applyDeadband(
                                 driverController.getLeftX(), ControllerConstants.DRIVER_DEADBAND)
                             != 0.0))
-        .debounce(0.2)
+        .debounce(0.3, Debouncer.DebounceType.kFalling)
         .onTrue(
             Commands.runOnce(fullAuto::cancel)
                 .andThen(

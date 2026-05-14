@@ -4,38 +4,60 @@
 
 package frc.robot.subsystems.intake;
 
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import org.littletonrobotics.junction.Logger;
+import frc.robot.Constants;
+import frc.robot.subsystems.rollers.Roller;
+import frc.robot.subsystems.rollers.RollerIO;
+import frc.robot.subsystems.rollers.RollerIOSim;
+import frc.robot.subsystems.rollers.RollerIOTalonFX;
 
 public class Intake extends SubsystemBase {
-  private final IntakeIO io;
-  private final IntakeIOInputsAutoLogged inputs = new IntakeIOInputsAutoLogged();
+  private final Roller roller;
 
-  public Intake(IntakeIO io) {
-    this.io = io;
+  public Intake() {
+    RollerIO io =
+        switch (Constants.currentMode) {
+          case REAL -> new RollerIOTalonFX(
+              Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
+              Constants.CANConstants.INTAKE,
+              IntakeConstants.INTAKE_CONFIG);
+          case SIM -> new RollerIOSim(
+              DCMotor.getKrakenX60(1),
+              IntakeConstants.INTAKE_GEAR_RATIO,
+              IntakeConstants.INTAKE_MOI,
+              IntakeConstants.INTAKE_KP * 10,
+              IntakeConstants.INTAKE_KD,
+              0);
+          default -> new RollerIO() {};
+        };
+    roller = new Roller("Intake", io);
   }
 
   @Override
   public void periodic() {
-    io.updateInputs(inputs);
-    Logger.processInputs("Intake", inputs);
+    roller.periodic();
   }
 
-  public void enable() {
-    io.setVelocity(IntakeConstants.INTAKE_RPS);
+  public void start() {
+    roller.runClosedLoop(IntakeConstants.INTAKE_RPS);
   }
 
   public void reverse() {
-    io.setVelocity(-IntakeConstants.INTAKE_RPS);
+    roller.runClosedLoop(-IntakeConstants.INTAKE_RPS);
   }
 
   public void stop() {
-    io.stop();
+    roller.stop();
+  }
+
+  public double getVelocityRPS() {
+    return roller.getVelocityRPS();
   }
 
   public Command intakeCommand() {
-    return startEnd(this::enable, this::stop);
+    return startEnd(this::start, this::stop);
   }
 
   public Command reverseCommand() {

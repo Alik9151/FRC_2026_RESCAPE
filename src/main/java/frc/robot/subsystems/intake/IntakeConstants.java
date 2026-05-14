@@ -9,7 +9,7 @@ import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public final class IntakeConstants {
   public static final double INTAKE_GEAR_RATIO = 1;
-  public static final double INTAKE_MOI = 0.05;
+  public static final double INTAKE_MOI = 0.001;
 
   public static final double INTAKE_KP = 0.1;
   public static final double INTAKE_KI = 0;
@@ -37,5 +37,5 @@ public final class IntakeConstants {
                   .withKS(INTAKE_KS)
                   .withKV(INTAKE_KV));
 
-  public static final double INTAKE_RPS = 5000 / 60.0;
+  public static final double INTAKE_RPS = 80;
 }

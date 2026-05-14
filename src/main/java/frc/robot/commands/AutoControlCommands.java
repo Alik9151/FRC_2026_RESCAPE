@@ -131,7 +131,7 @@ public class AutoControlCommands {
         Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
         driveToLoading(drive),
         Commands.runOnce(drive::stopWithX),
-        Commands.runOnce(intake::enable, intake),
+        Commands.runOnce(intake::start, intake),
         Commands.waitUntil(outtake::hasGamePiece),
         Commands.runOnce(intake::stop, intake),
         driveToReef(drive),
@@ -139,7 +139,7 @@ public class AutoControlCommands {
         Commands.runOnce(
             () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
         Commands.waitUntil(elevator::hasReachedSetpoint),
-        Commands.runOnce(outtake::enable, outtake),
+        Commands.runOnce(outtake::start, outtake),
         Commands.waitUntil(() -> !outtake.hasGamePiece())
             .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())));
   }
@@ -152,13 +152,13 @@ public class AutoControlCommands {
         Commands.runOnce(
             () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
         Commands.waitUntil(elevator::hasReachedSetpoint),
-        Commands.runOnce(outtake::enable, outtake),
+        Commands.runOnce(outtake::start, outtake),
         Commands.waitUntil(() -> !outtake.hasGamePiece())
             .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())),
         Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
         driveToLoading(drive),
         Commands.runOnce(drive::stopWithX),
-        Commands.runOnce(intake::enable, intake),
+        Commands.runOnce(intake::start, intake),
         Commands.waitUntil(outtake::hasGamePiece),
         Commands.runOnce(intake::stop, intake));
   }

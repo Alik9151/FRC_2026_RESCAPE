@@ -12,6 +12,8 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.elevator.ElevatorConstants;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.outtake.Outtake;
 import java.util.function.Supplier;
 import org.dyn4j.geometry.Rectangle;
 import org.ironmaple.simulation.IntakeSimulation;
@@ -23,6 +25,8 @@ import org.littletonrobotics.junction.Logger;
 
 public class SuperstructureSim {
   private final Elevator elevator;
+  private final Intake intake;
+  private final Outtake outtake;
   private final SwerveDriveSimulation swerveDriveSimulation;
   private final Supplier<ChassisSpeeds> chassisSpeeds;
 
@@ -32,9 +36,13 @@ public class SuperstructureSim {
 
   public SuperstructureSim(
       Elevator elevator,
+      Intake intake,
+      Outtake outtake,
       SwerveDriveSimulation swerveDriveSimulation,
       Supplier<ChassisSpeeds> chassisSpeeds) {
     this.elevator = elevator;
+    this.intake = intake;
+    this.outtake = outtake;
     this.swerveDriveSimulation = swerveDriveSimulation;
     this.chassisSpeeds = chassisSpeeds;
 
@@ -51,6 +59,11 @@ public class SuperstructureSim {
   }
 
   public void simulationPeriodic() {
+    if (intake.getVelocityRPS() > 70.0) intakeSimulation.startIntake();
+    else intakeSimulation.stopIntake();
+
+    if (outtake.getVelocityRPS() > 50.0) scoreFuel();
+
     double carriageHeight = ElevatorConstants.radiansToMeters(elevator.getPositionRad());
 
     double stage1Height = MathUtil.clamp(carriageHeight / 2.0, 0.0, STAGE_1_MAX_HEIGHT);
@@ -80,14 +93,6 @@ public class SuperstructureSim {
     } else {
       Logger.recordOutput("FieldSimulation/CoralInBot", new Pose3d());
     }
-  }
-
-  public void startIntake() {
-    intakeSimulation.startIntake();
-  }
-
-  public void stopIntake() {
-    intakeSimulation.stopIntake();
   }
 
   public boolean isLoaded() {

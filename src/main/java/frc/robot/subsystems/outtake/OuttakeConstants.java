@@ -28,7 +28,7 @@ public final class OuttakeConstants {
           .withMotorOutput(
               new MotorOutputConfigs()
                   .withInverted(InvertedValue.CounterClockwise_Positive)
-                  .withNeutralMode(NeutralModeValue.Coast))
+                  .withNeutralMode(NeutralModeValue.Brake))
           .withSlot0(
               new Slot0Configs()
                   .withKP(OUTTAKE_KP)
@@ -37,5 +37,5 @@ public final class OuttakeConstants {
                   .withKS(OUTTAKE_KS)
                   .withKV(OUTTAKE_KV));
 
-  public static final double OUTTAKE_RPS = 5000 / 60.0;
+  public static final double OUTTAKE_RPS = 60;
 }
