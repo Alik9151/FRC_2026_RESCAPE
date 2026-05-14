@@ -1,4 +1,4 @@
-package frc.robot.subsystems.rollers;
+package frc.robot.util.io.motors;
 
 import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
@@ -10,21 +10,23 @@ import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
-import edu.wpi.first.units.measure.AngularVelocity;
-import edu.wpi.first.units.measure.Current;
-import edu.wpi.first.units.measure.Temperature;
-import edu.wpi.first.units.measure.Voltage;
+import edu.wpi.first.math.util.Units;
+import edu.wpi.first.units.measure.*;
 import frc.robot.util.PhoenixUtil;
+import frc.robot.util.io.motors.pivot.PivotIO;
+import frc.robot.util.io.motors.roller.RollerIO;
 
-public class RollerIOTalonFX implements RollerIO {
+public class MotorIOTalonFX implements PivotIO, RollerIO {
   private final TalonFX leader;
   private final TalonFX[] followers;
 
   private final VoltageOut voltageRequest = new VoltageOut(0);
+  private final PositionVoltage positionRequest = new PositionVoltage(0);
   private final VelocityVoltage velocityRequest = new VelocityVoltage(0);
   private final CoastOut coastRequest = new CoastOut();
   private final StaticBrake brakeRequest = new StaticBrake();
 
+  private final StatusSignal<Angle> position;
   private final StatusSignal<AngularVelocity> velocity;
   private final StatusSignal<Voltage> voltage;
   private final StatusSignal<Current> supplyCurrent;
@@ -33,11 +35,11 @@ public class RollerIOTalonFX implements RollerIO {
 
   private final BaseStatusSignal[] followerTemps;
 
-  public RollerIOTalonFX(CANBus canbus, int id, TalonFXConfiguration config) {
+  public MotorIOTalonFX(CANBus canbus, int id, TalonFXConfiguration config) {
     this(canbus, id, new int[0], config, new MotorAlignmentValue[0]);
   }
 
-  public RollerIOTalonFX(
+  public MotorIOTalonFX(
       CANBus canbus,
       int id,
       int[] followerIds,
@@ -47,7 +49,7 @@ public class RollerIOTalonFX implements RollerIO {
     leader = new TalonFX(id, canbus);
     followers = new TalonFX[followerIds.length];
     for (int i = 0; i < followers.length; i++) {
-      followers[i] = new TalonFX(id, canbus);
+      followers[i] = new TalonFX(followerIds[i], canbus);
     }
     // Configure motors
     tryUntilOk(5, () -> leader.getConfigurator().apply(config));
@@ -55,6 +57,7 @@ public class RollerIOTalonFX implements RollerIO {
       follower.getConfigurator().apply(config);
     }
     // Create status signals
+    position = leader.getPosition();
     velocity = leader.getVelocity();
     voltage = leader.getMotorVoltage();
     supplyCurrent = leader.getSupplyCurrent();
@@ -66,23 +69,23 @@ public class RollerIOTalonFX implements RollerIO {
     }
     // Register status signals
     BaseStatusSignal.setUpdateFrequencyForAll(
-        100.0, velocity, voltage, supplyCurrent, statorCurrent, temp);
+        100.0, position, velocity, voltage, supplyCurrent, statorCurrent, temp);
     BaseStatusSignal.setUpdateFrequencyForAll(50.0, followerTemps);
     leader.optimizeBusUtilization();
     ParentDevice.optimizeBusUtilizationForAll(followers);
-    PhoenixUtil.registerSignals(canbus, velocity, voltage, supplyCurrent, statorCurrent, temp);
+    PhoenixUtil.registerSignals(
+        canbus, position, velocity, voltage, supplyCurrent, statorCurrent, temp);
     PhoenixUtil.registerSignals(canbus, followerTemps);
+    leader.setPosition(0);
     // Set follower behavior
     for (int i = 0; i < followers.length; i++) {
       followers[i].setControl(new Follower(leader.getDeviceID(), followerAlignments[i]));
     }
   }
 
-  @Override
-  public void updateInputs(RollerIOInputs inputs) {
+  private void updateMotorInputs(MotorIOInputs inputs) {
     inputs.connected =
-        BaseStatusSignal.isAllGood(velocity, voltage, supplyCurrent, statorCurrent, temp);
-    inputs.velocityRPS = velocity.getValueAsDouble();
+        BaseStatusSignal.isAllGood(position, velocity, voltage, supplyCurrent, statorCurrent, temp);
     inputs.appliedVoltage = voltage.getValueAsDouble();
     inputs.supplyCurrentAmps = supplyCurrent.getValueAsDouble();
     inputs.statorCurrentAmps = statorCurrent.getValueAsDouble();
@@ -95,8 +98,25 @@ public class RollerIOTalonFX implements RollerIO {
   }
 
   @Override
+  public void updateInputs(PivotIOInputs inputs) {
+    updateMotorInputs(inputs);
+    inputs.positionDeg = velocity.getValueAsDouble();
+  }
+
+  @Override
+  public void updateInputs(RollerIOInputs inputs) {
+    updateMotorInputs(inputs);
+    inputs.velocityRPS = velocity.getValueAsDouble();
+  }
+
+  @Override
   public void setVoltage(double volts) {
     leader.setControl(voltageRequest.withOutput(volts));
+  }
+
+  @Override
+  public void setPosition(double deg) {
+    leader.setControl(positionRequest.withPosition(Units.degreesToRotations(deg)));
   }
 
   @Override

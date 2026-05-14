@@ -1,8 +1,9 @@
-package frc.robot.subsystems.rollers;
+package frc.robot.util.io.motors.roller;
 
 import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 import edu.wpi.first.units.measure.AngularVelocity;
+import frc.robot.util.io.motors.MotorIO;
 import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
 
@@ -10,7 +11,7 @@ public class Roller {
   private final String name;
   private final RollerIO io;
   protected final RollerIOInputsAutoLogged inputs = new RollerIOInputsAutoLogged();
-  private RollerIO.RollerIOMode mode;
+  private MotorIO.MotorIOMode mode;
 
   private final BooleanSupplier brakeDurNeutral;
 
@@ -21,8 +22,7 @@ public class Roller {
   public Roller(String name, RollerIO io, BooleanSupplier brakeMode) {
     this.name = name;
     this.io = io;
-    this.mode =
-        brakeMode.getAsBoolean() ? RollerIO.RollerIOMode.BRAKE : RollerIO.RollerIOMode.COAST;
+    this.mode = brakeMode.getAsBoolean() ? MotorIO.MotorIOMode.BRAKE : MotorIO.MotorIOMode.COAST;
     this.brakeDurNeutral = brakeMode;
 
     // Initialize input arrays
@@ -37,21 +37,21 @@ public class Roller {
 
   public void runOpenLoop(double volts) {
     io.setVoltage(volts);
-    mode = RollerIO.RollerIOMode.VOLTAGE_CONTROL;
+    mode = MotorIO.MotorIOMode.VOLTAGE_CONTROL;
   }
 
   public void runClosedLoop(double rps) {
     io.setVelocity(rps);
-    mode = RollerIO.RollerIOMode.CLOSED_LOOP;
+    mode = MotorIO.MotorIOMode.VELOCITY_CONTROL;
   }
 
   public void stop() {
     if (brakeDurNeutral.getAsBoolean()) {
       io.brake();
-      mode = RollerIO.RollerIOMode.BRAKE;
+      mode = MotorIO.MotorIOMode.BRAKE;
     } else {
       io.coast();
-      mode = RollerIO.RollerIOMode.COAST;
+      mode = MotorIO.MotorIOMode.COAST;
     }
   }
 

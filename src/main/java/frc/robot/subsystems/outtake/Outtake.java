@@ -9,12 +9,13 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
-import frc.robot.subsystems.rollers.Roller;
-import frc.robot.subsystems.rollers.RollerIO;
-import frc.robot.subsystems.rollers.RollerIOSim;
-import frc.robot.subsystems.rollers.RollerIOTalonFX;
-import frc.robot.subsystems.sensors.CoralSensorIO;
-import frc.robot.subsystems.sensors.CoralSensorIOInputsAutoLogged;
+import frc.robot.subsystems.intake.IntakeConstants;
+import frc.robot.util.io.motors.*;
+import frc.robot.util.io.motors.roller.Roller;
+import frc.robot.util.io.motors.roller.RollerIO;
+import frc.robot.util.io.motors.roller.RollerIOSim;
+import frc.robot.util.io.sensors.CoralSensorIO;
+import frc.robot.util.io.sensors.CoralSensorIOInputsAutoLogged;
 import lombok.Setter;
 import org.littletonrobotics.junction.Logger;
 
@@ -28,16 +29,16 @@ public class Outtake extends SubsystemBase {
   public Outtake() {
     RollerIO io =
         switch (Constants.currentMode) {
-          case REAL -> new RollerIOTalonFX(
+          case REAL -> new MotorIOTalonFX(
               Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
               Constants.CANConstants.OUTTAKE,
               OuttakeConstants.OUTTAKE_CONFIG);
           case SIM -> new RollerIOSim(
               DCMotor.getKrakenX60(1),
-              OuttakeConstants.OUTTAKE_GEAR_RATIO,
-              OuttakeConstants.OUTTAKE_MOI,
-              OuttakeConstants.OUTTAKE_KP * 10,
-              OuttakeConstants.OUTTAKE_KD,
+              new MotorIO.MechanismConstraints(
+                  IntakeConstants.INTAKE_GEAR_RATIO, IntakeConstants.INTAKE_MOI, 2.0, 0, 0, 0),
+              IntakeConstants.INTAKE_KP,
+              IntakeConstants.INTAKE_KD,
               0);
           default -> new RollerIO() {};
         };

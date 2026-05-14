@@ -1,12 +1,8 @@
-package frc.robot.subsystems.rollers;
+package frc.robot.util.io.motors;
 
-import org.littletonrobotics.junction.AutoLog;
-
-public interface RollerIO {
-  @AutoLog
-  class RollerIOInputs {
+public interface MotorIO {
+  abstract class MotorIOInputs {
     public boolean connected;
-    public double velocityRPS;
     public double appliedVoltage;
     public double supplyCurrentAmps;
     public double statorCurrentAmps;
@@ -16,18 +12,23 @@ public interface RollerIO {
     public double[] followerTempCelsius;
   }
 
-  enum RollerIOMode {
+  enum MotorIOMode {
     COAST,
     BRAKE,
     VOLTAGE_CONTROL,
-    CLOSED_LOOP
+    POSITION_CONTROL,
+    VELOCITY_CONTROL
   }
 
-  default void updateInputs(RollerIOInputs inputs) {}
+  record MechanismConstraints(
+      double reduction,
+      double moi,
+      double radiusMeters,
+      double minAngleRads,
+      double maxAngleRads,
+      double startingAngleRads) {}
 
   default void setVoltage(double volts) {}
-
-  default void setVelocity(double rps) {}
 
   default void coast() {}
 
