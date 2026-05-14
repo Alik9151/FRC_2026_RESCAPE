@@ -1,7 +1,6 @@
 package frc.robot.util.io.motors;
 
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.system.plant.DCMotor;
 import java.util.Arrays;
 
 public class MotorIOSim implements MotorIO {
@@ -11,8 +10,7 @@ public class MotorIOSim implements MotorIO {
   protected final PIDController pid;
   protected boolean isClosedLoop;
 
-  public MotorIOSim(
-      DCMotor motorModel, double reduction, double moi, double kP, double kD, int numFollowers) {
+  public MotorIOSim(double kP, double kD, int numFollowers) {
     this.numFollowers = numFollowers;
     pid = new PIDController(kP, 0.0, kD);
   }

@@ -15,7 +15,7 @@ public class PivotIOSim extends MotorIOSim implements PivotIO {
       double kP,
       double kD,
       int numFollowers) {
-    super(motorModel, constraints.reduction(), constraints.moi(), kP, kD, numFollowers);
+    super(kP, kD, numFollowers);
     sim =
         new SingleJointedArmSim(
             motorModel,

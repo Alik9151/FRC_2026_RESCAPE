@@ -18,7 +18,7 @@ public class RollerIOSim extends MotorIOSim implements RollerIO {
       double kP,
       double kD,
       int numFollowers) {
-    super(motorModel, constraints.reduction(), constraints.moi(), kP, kD, numFollowers);
+    super(kP, kD, numFollowers);
     sim =
         new DCMotorSim(
             LinearSystemId.createDCMotorSystem(
