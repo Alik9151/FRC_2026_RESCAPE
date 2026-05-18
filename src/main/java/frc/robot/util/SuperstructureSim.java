@@ -53,7 +53,7 @@ public class SuperstructureSim {
             // Specify the drivetrain to which this intake is attached
             swerveDriveSimulation,
             // Width of the intake
-            new Rectangle(0.7, 0.5),
+            new Rectangle(0.7, 0.6),
             // The intake can hold up to 1 Coral
             1);
   }
@@ -72,10 +72,14 @@ public class SuperstructureSim {
     // Logger.recordOutput("FieldSimulation/Tuning", new Pose3d(0.0, 0.0, 0.0, Rotation3d.kZero));
     Logger.recordOutput(
         "FieldSimulation/RobotComponentPositions",
-        new Pose3d(0.0, 0.0, stage1Height, Rotation3d.kZero),
-        new Pose3d(0.0, 0.0, stage2Height, Rotation3d.kZero),
-        new Pose3d(-0.305, 0, 0.23, new Rotation3d(0, Math.toRadians(42.5), 0)),
-        new Pose3d(0.2, 0.0, 0.55 + stage2Height, Rotation3d.kZero));
+        new Pose3d(0.0, 0.0, stage1Height, Rotation3d.kZero), // stage 1
+        new Pose3d(0.0, 0.0, stage2Height, Rotation3d.kZero), // stage 2
+        new Pose3d(
+            -0.305,
+            0,
+            0.23,
+            new Rotation3d(0, Math.toRadians(42.5 - intake.getPositionDeg()), 0)), // intake
+        new Pose3d(0.2, 0.0, 0.55 + stage2Height, Rotation3d.kZero)); // outtake
 
     if (isLoaded()) {
       Pose2d simDrivePose = swerveDriveSimulation.getSimulatedDriveTrainPose();

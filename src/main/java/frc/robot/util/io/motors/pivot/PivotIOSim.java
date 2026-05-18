@@ -25,8 +25,7 @@ public class PivotIOSim extends MotorIOSim implements PivotIO {
             constraints.minAngleRads(),
             constraints.maxAngleRads(),
             true,
-            constraints.startingAngleRads(),
-            0.0);
+            constraints.startingAngleRads());
   }
 
   @Override
@@ -45,7 +44,7 @@ public class PivotIOSim extends MotorIOSim implements PivotIO {
 
   @Override
   public void setPosition(double deg) {
-    pid.setSetpoint(deg);
+    pid.setSetpoint(Units.degreesToRotations(deg));
     isClosedLoop = true;
   }
 }
