@@ -1,9 +1,7 @@
 package frc.robot.util;
 
 import static edu.wpi.first.units.Units.*;
-import static frc.robot.subsystems.elevator.ElevatorConstants.STAGE_1_MAX_HEIGHT;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -15,7 +13,6 @@ import frc.robot.subsystems.elevator.ElevatorConstants;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.outtake.Outtake;
 import java.util.function.Supplier;
-import org.dyn4j.geometry.Rectangle;
 import org.ironmaple.simulation.IntakeSimulation;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -32,6 +29,7 @@ public class SuperstructureSim {
 
   private final IntakeSimulation intakeSimulation;
 
+  private double stage1Height;
   private double stage2Height;
 
   public SuperstructureSim(
@@ -47,15 +45,27 @@ public class SuperstructureSim {
     this.chassisSpeeds = chassisSpeeds;
 
     intakeSimulation =
-        new IntakeSimulation(
+        IntakeSimulation.OverTheBumperIntake(
             // Specify the type of game pieces that the intake can collect
             "Coral",
             // Specify the drivetrain to which this intake is attached
             swerveDriveSimulation,
             // Width of the intake
-            new Rectangle(0.7, 0.6),
+            Meters.of(0.7),
+            Meters.of(0.2),
+            IntakeSimulation.IntakeSide.BACK,
             // The intake can hold up to 1 Coral
             1);
+
+    // new IntakeSimulation(
+    //         // Specify the type of game pieces that the intake can collect
+    //         "Coral",
+    //         // Specify the drivetrain to which this intake is attached
+    //         swerveDriveSimulation,
+    //         // Width of the intake
+    //         new Rectangle(0.7, 0.6),
+    //         // The intake can hold up to 1 Coral
+    //         1);
   }
 
   public void simulationPeriodic() {
@@ -66,7 +76,7 @@ public class SuperstructureSim {
 
     double carriageHeight = ElevatorConstants.radiansToMeters(elevator.getPositionRad());
 
-    double stage1Height = MathUtil.clamp(carriageHeight / 2.0, 0.0, STAGE_1_MAX_HEIGHT);
+    stage1Height = carriageHeight / 2.0;
     stage2Height = carriageHeight;
 
     // Logger.recordOutput("FieldSimulation/Tuning", new Pose3d(0.0, 0.0, 0.0, Rotation3d.kZero));
@@ -125,7 +135,7 @@ public class SuperstructureSim {
 
   public void loadFuel(CoralStationsSide side) {
     ReefscapeCoralOnFly coralOnFly =
-        ReefscapeCoralOnFly.DropFromCoralStation(side, DriverStation.getAlliance().get(), false);
+        ReefscapeCoralOnFly.DropFromCoralStation(side, DriverStation.getAlliance().get(), true);
     SimulatedArena.getInstance().addGamePieceProjectile(coralOnFly);
   }
 }

@@ -26,7 +26,6 @@ public final class ElevatorConstants {
   public static final double CARRIAGE_MASS = 15;
   public static final double DRUM_RADIUS = 0.2;
   public static final double MAX_HEIGHT = 4;
-  public static final double STAGE_1_MAX_HEIGHT = 1.5;
 
   public static final TalonFXConfiguration ELEVATOR_CONFIG =
       new TalonFXConfiguration()
