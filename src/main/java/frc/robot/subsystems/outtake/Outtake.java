@@ -105,6 +105,10 @@ public class Outtake extends SubsystemBase {
     return roller.getVelocityRPS();
   }
 
+  public double getPositionDeg() {
+    return pivot.getPositionDeg();
+  }
+
   public boolean hasReachedSetpoint() {
     return Math.abs(pivot.getPositionDeg() - setpointDeg) < 3.0;
   }

@@ -1,11 +1,14 @@
 package frc.robot.util;
 
-import static edu.wpi.first.units.Units.*;
+import static edu.wpi.first.units.Units.Degrees;
+import static edu.wpi.first.units.Units.Meters;
+import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.subsystems.elevator.Elevator;
@@ -32,6 +35,11 @@ public class SuperstructureSim {
   private double stage1Height;
   private double stage2Height;
 
+  private Pose3d localCoral;
+
+  // Define the length of the outtake arm from pivot to the center of the held Coral
+  private static final double OUTTAKE_ARM_LENGTH_METERS = 0.35;
+
   public SuperstructureSim(
       Elevator elevator,
       Intake intake,
@@ -46,40 +54,26 @@ public class SuperstructureSim {
 
     intakeSimulation =
         IntakeSimulation.OverTheBumperIntake(
-            // Specify the type of game pieces that the intake can collect
             "Coral",
-            // Specify the drivetrain to which this intake is attached
             swerveDriveSimulation,
-            // Width of the intake
             Meters.of(0.7),
             Meters.of(0.2),
             IntakeSimulation.IntakeSide.BACK,
-            // The intake can hold up to 1 Coral
             1);
-
-    // new IntakeSimulation(
-    //         // Specify the type of game pieces that the intake can collect
-    //         "Coral",
-    //         // Specify the drivetrain to which this intake is attached
-    //         swerveDriveSimulation,
-    //         // Width of the intake
-    //         new Rectangle(0.7, 0.6),
-    //         // The intake can hold up to 1 Coral
-    //         1);
   }
 
   public void simulationPeriodic() {
     if (intake.getVelocityRPS() > 70.0) intakeSimulation.startIntake();
     else intakeSimulation.stopIntake();
 
-    if (outtake.getVelocityRPS() > 50.0) scoreFuel();
-
     double carriageHeight = ElevatorConstants.radiansToMeters(elevator.getPositionRad());
 
     stage1Height = carriageHeight / 2.0;
     stage2Height = carriageHeight;
 
-    // Logger.recordOutput("FieldSimulation/Tuning", new Pose3d(0.0, 0.0, 0.0, Rotation3d.kZero));
+    Translation3d outtakePivot = new Translation3d(0.2, 0.0, 0.55 + stage2Height);
+    Rotation3d outtakeRotation = new Rotation3d(0, Math.toRadians(-outtake.getPositionDeg()), 0);
+
     Logger.recordOutput(
         "FieldSimulation/RobotComponentPositions",
         new Pose3d(0.0, 0.0, stage1Height, Rotation3d.kZero), // stage 1
@@ -89,24 +83,48 @@ public class SuperstructureSim {
             0,
             0.23,
             new Rotation3d(0, Math.toRadians(42.5 - intake.getPositionDeg()), 0)), // intake
-        new Pose3d(0.2, 0.0, 0.55 + stage2Height, Rotation3d.kZero)); // outtake
+        new Pose3d(outtakePivot, outtakeRotation)); // outtake
 
     if (isLoaded()) {
+      localCoral = getCoralRobotRelativePose();
+
       Pose2d simDrivePose = swerveDriveSimulation.getSimulatedDriveTrainPose();
-      Translation2d coralTranslation =
-          simDrivePose
-              .getTranslation()
-              .plus(new Translation2d(0.25, 0).rotateBy(simDrivePose.getRotation()));
-      Logger.recordOutput(
-          "FieldSimulation/CoralInBot",
-          new Pose3d(
-              coralTranslation.getX(),
-              coralTranslation.getY(),
-              stage2Height + 0.7,
-              new Rotation3d(simDrivePose.getRotation())));
+      Translation3d localTranslation = localCoral.getTranslation();
+
+      Translation3d globalTranslationOffset =
+          localTranslation.rotateBy(new Rotation3d(0, 0, simDrivePose.getRotation().getRadians()));
+
+      Translation3d globalCoralTranslation =
+          new Translation3d(simDrivePose.getX(), simDrivePose.getY(), 0.0)
+              .plus(globalTranslationOffset);
+
+      Rotation3d globalCoralRotation =
+          new Rotation3d(
+              localCoral.getRotation().getX(),
+              localCoral.getRotation().getY(),
+              localCoral.getRotation().getZ() + simDrivePose.getRotation().getRadians());
+
+      Pose3d globalCoralPose = new Pose3d(globalCoralTranslation, globalCoralRotation);
+
+      Logger.recordOutput("FieldSimulation/CoralInBot", globalCoralPose);
     } else {
       Logger.recordOutput("FieldSimulation/CoralInBot", new Pose3d());
     }
+
+    if (outtake.getVelocityRPS() > 50.0) scoreFuel();
+  }
+
+  private Pose3d getCoralRobotRelativePose() {
+    Translation3d outtakePivotInRobot = new Translation3d(0.2, 0.0, 0.55 + stage2Height);
+    Rotation3d outtakeRotation = new Rotation3d(0, Math.toRadians(-outtake.getPositionDeg()), 0);
+
+    Translation3d coralOffsetFromPivot = new Translation3d(0.0, 0.0, -OUTTAKE_ARM_LENGTH_METERS);
+
+    Translation3d rotatedCoralOffset = coralOffsetFromPivot.rotateBy(outtakeRotation);
+
+    Translation3d coralInRobotSpace = outtakePivotInRobot.plus(rotatedCoralOffset);
+
+    return new Pose3d(coralInRobotSpace, outtakeRotation);
   }
 
   public boolean isLoaded() {
@@ -118,15 +136,24 @@ public class SuperstructureSim {
       return;
     }
 
+    Translation3d localCoralTranslation = localCoral.getTranslation();
+
+    Translation2d dynamicLaunchOffset =
+        new Translation2d(localCoralTranslation.getX(), localCoralTranslation.getY());
+
+    double dynamicLaunchHeight = localCoralTranslation.getZ();
+
+    double dynamicPitchDegrees = outtake.getPositionDeg();
+
     ReefscapeCoralOnFly coralOnFly =
         new ReefscapeCoralOnFly(
             swerveDriveSimulation.getSimulatedDriveTrainPose().getTranslation(),
-            new Translation2d(.275, 0),
+            dynamicLaunchOffset,
             chassisSpeeds.get(),
             swerveDriveSimulation.getSimulatedDriveTrainPose().getRotation(),
-            Meters.of(stage2Height + 0.7), // change to elevator state/height later
-            MetersPerSecond.of(0.75),
-            Degrees.of(-20));
+            Meters.of(dynamicLaunchHeight),
+            MetersPerSecond.of(-1),
+            Degrees.of(dynamicPitchDegrees));
 
     coralOnFly.enableBecomesGamePieceOnFieldAfterTouchGround();
 

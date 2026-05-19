@@ -18,7 +18,7 @@ public final class OuttakeConstants {
   public static final double ROLLER_KS = 0;
   public static final double ROLLER_KV = 0.12;
 
-  public static final double PIVOT_KP = 2.0;
+  public static final double PIVOT_KP = 1.5;
   public static final double PIVOT_KI = 0;
   public static final double PIVOT_KD = 0;
   public static final double PIVOT_KS = 0;
