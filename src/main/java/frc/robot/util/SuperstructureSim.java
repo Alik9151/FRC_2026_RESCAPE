@@ -132,18 +132,13 @@ public class SuperstructureSim {
 
     Translation3d localCoralTranslation = localCoral.getTranslation();
 
-    Translation2d dynamicLaunchOffset =
-        new Translation2d(localCoralTranslation.getX(), localCoralTranslation.getY());
-
-    double dynamicLaunchHeight = localCoralTranslation.getZ();
-
     ReefscapeCoralOnFly coralOnFly =
         new ReefscapeCoralOnFly(
             swerveDriveSimulation.getSimulatedDriveTrainPose().getTranslation(),
-            dynamicLaunchOffset,
+            new Translation2d(localCoralTranslation.getX(), localCoralTranslation.getY()),
             chassisSpeeds.get(),
             swerveDriveSimulation.getSimulatedDriveTrainPose().getRotation(),
-            Meters.of(dynamicLaunchHeight),
+            Meters.of(localCoralTranslation.getZ()),
             MetersPerSecond.of(-1),
             Degrees.of(outtake.getPositionDeg()));
 
