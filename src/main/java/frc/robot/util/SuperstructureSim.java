@@ -4,11 +4,7 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
 
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import frc.robot.subsystems.elevator.Elevator;
@@ -35,6 +31,8 @@ public class SuperstructureSim {
   private double stage1Height;
   private double stage2Height;
 
+  private Translation3d outtakeTranslation;
+  private Rotation3d outtakeRotation;
   private Pose3d localCoral;
 
   // Define the length of the outtake arm from pivot to the center of the held Coral
@@ -71,8 +69,8 @@ public class SuperstructureSim {
     stage1Height = carriageHeight / 2.0;
     stage2Height = carriageHeight;
 
-    Translation3d outtakePivot = new Translation3d(0.2, 0.0, 0.55 + stage2Height);
-    Rotation3d outtakeRotation = new Rotation3d(0, Math.toRadians(-outtake.getPositionDeg()), 0);
+    outtakeTranslation = new Translation3d(0.2, 0.0, 0.55 + stage2Height);
+    outtakeRotation = new Rotation3d(0, Math.toRadians(-outtake.getPositionDeg()), 0);
 
     Logger.recordOutput(
         "FieldSimulation/RobotComponentPositions",
@@ -83,16 +81,17 @@ public class SuperstructureSim {
             0,
             0.23,
             new Rotation3d(0, Math.toRadians(42.5 - intake.getPositionDeg()), 0)), // intake
-        new Pose3d(outtakePivot, outtakeRotation)); // outtake
+        new Pose3d(outtakeTranslation, outtakeRotation)); // outtake
 
     if (isLoaded()) {
       localCoral = getCoralRobotRelativePose();
 
       Pose2d simDrivePose = swerveDriveSimulation.getSimulatedDriveTrainPose();
-      Translation3d localTranslation = localCoral.getTranslation();
 
       Translation3d globalTranslationOffset =
-          localTranslation.rotateBy(new Rotation3d(0, 0, simDrivePose.getRotation().getRadians()));
+          localCoral
+              .getTranslation()
+              .rotateBy(new Rotation3d(0, 0, simDrivePose.getRotation().getRadians()));
 
       Translation3d globalCoralTranslation =
           new Translation3d(simDrivePose.getX(), simDrivePose.getY(), 0.0)
@@ -115,14 +114,9 @@ public class SuperstructureSim {
   }
 
   private Pose3d getCoralRobotRelativePose() {
-    Translation3d outtakePivotInRobot = new Translation3d(0.2, 0.0, 0.55 + stage2Height);
-    Rotation3d outtakeRotation = new Rotation3d(0, Math.toRadians(-outtake.getPositionDeg()), 0);
-
-    Translation3d coralOffsetFromPivot = new Translation3d(0.0, 0.0, -OUTTAKE_ARM_LENGTH_METERS);
-
-    Translation3d rotatedCoralOffset = coralOffsetFromPivot.rotateBy(outtakeRotation);
-
-    Translation3d coralInRobotSpace = outtakePivotInRobot.plus(rotatedCoralOffset);
+    Translation3d rotatedCoralOffset =
+        new Translation3d(0.0, 0.0, -OUTTAKE_ARM_LENGTH_METERS).rotateBy(outtakeRotation);
+    Translation3d coralInRobotSpace = outtakeTranslation.plus(rotatedCoralOffset);
 
     return new Pose3d(coralInRobotSpace, outtakeRotation);
   }
@@ -143,8 +137,6 @@ public class SuperstructureSim {
 
     double dynamicLaunchHeight = localCoralTranslation.getZ();
 
-    double dynamicPitchDegrees = outtake.getPositionDeg();
-
     ReefscapeCoralOnFly coralOnFly =
         new ReefscapeCoralOnFly(
             swerveDriveSimulation.getSimulatedDriveTrainPose().getTranslation(),
@@ -153,7 +145,7 @@ public class SuperstructureSim {
             swerveDriveSimulation.getSimulatedDriveTrainPose().getRotation(),
             Meters.of(dynamicLaunchHeight),
             MetersPerSecond.of(-1),
-            Degrees.of(dynamicPitchDegrees));
+            Degrees.of(outtake.getPositionDeg()));
 
     coralOnFly.enableBecomesGamePieceOnFieldAfterTouchGround();
 
