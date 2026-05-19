@@ -49,11 +49,12 @@ public final class Constants {
     public static final int ELEVATOR_LEADER = 0;
     public static final int ELEVATOR_FOLLOWER = 0;
 
-    public static final int INTAKE_ROLLER = 0;
     public static final int INTAKE_PIVOT = 0;
+    public static final int INTAKE_ROLLER = 0;
 
-    public static final int OUTTAKE_ROLLER = 0;
     public static final int OUTTAKE_PIVOT = 0;
+    public static final int OUTTAKE_ROLLER = 0;
+    public static final int OUTTAKE_ENCODER = 0;
 
     public static final int CORAL_SENSOR = 0;
   }

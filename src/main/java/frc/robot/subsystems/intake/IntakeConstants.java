@@ -2,47 +2,29 @@ package frc.robot.subsystems.intake;
 
 import com.ctre.phoenix6.configs.*;
 import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
+import com.ctre.phoenix6.signals.GravityTypeValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public final class IntakeConstants {
-  public static final double ROLLER_GEAR_RATIO = 1;
-  public static final double ROLLER_MOI = 0.002;
-
   public static final double PIVOT_GEAR_RATIO = 1;
   public static final double PIVOT_MOI = 0.05;
 
-  public static final double ROLLER_KP = 2.0;
-  public static final double ROLLER_KI = 0;
-  public static final double ROLLER_KD = 0;
-  public static final double ROLLER_KS = 0;
-  public static final double ROLLER_KV = 0.12;
+  public static final double ROLLER_GEAR_RATIO = 1;
+  public static final double ROLLER_MOI = 0.002;
 
   public static final double PIVOT_KP = 2.0;
   public static final double PIVOT_KI = 0;
   public static final double PIVOT_KD = 0;
   public static final double PIVOT_KS = 0;
   public static final double PIVOT_KV = 0.12;
+  public static final double PIVOT_KG = 0.1;
 
-  public static final TalonFXConfiguration ROLLER_CONFIG =
-      new TalonFXConfiguration()
-          .withCurrentLimits(
-              new CurrentLimitsConfigs()
-                  .withStatorCurrentLimit(60)
-                  .withSupplyCurrentLimit(40)
-                  .withStatorCurrentLimitEnable(true)
-                  .withSupplyCurrentLimitEnable(true))
-          .withMotorOutput(
-              new MotorOutputConfigs()
-                  .withInverted(InvertedValue.CounterClockwise_Positive)
-                  .withNeutralMode(NeutralModeValue.Coast))
-          .withSlot0(
-              new Slot0Configs()
-                  .withKP(ROLLER_KP)
-                  .withKI(ROLLER_KI)
-                  .withKD(ROLLER_KD)
-                  .withKS(ROLLER_KS)
-                  .withKV(ROLLER_KV));
+  public static final double ROLLER_KP = 2.0;
+  public static final double ROLLER_KI = 0;
+  public static final double ROLLER_KD = 0;
+  public static final double ROLLER_KS = 0;
+  public static final double ROLLER_KV = 0.12;
 
   public static final TalonFXConfiguration PIVOT_CONFIG =
       new TalonFXConfiguration()
@@ -66,8 +48,30 @@ public final class IntakeConstants {
                   .withKI(PIVOT_KI)
                   .withKD(PIVOT_KD)
                   .withKS(PIVOT_KS)
-                  .withKV(PIVOT_KV));
+                  .withKV(PIVOT_KV)
+                  .withKG(PIVOT_KG)
+                  .withGravityType(GravityTypeValue.Arm_Cosine));
 
+  public static final TalonFXConfiguration ROLLER_CONFIG =
+      new TalonFXConfiguration()
+          .withCurrentLimits(
+              new CurrentLimitsConfigs()
+                  .withStatorCurrentLimit(60)
+                  .withSupplyCurrentLimit(40)
+                  .withStatorCurrentLimitEnable(true)
+                  .withSupplyCurrentLimitEnable(true))
+          .withMotorOutput(
+              new MotorOutputConfigs()
+                  .withInverted(InvertedValue.CounterClockwise_Positive)
+                  .withNeutralMode(NeutralModeValue.Coast))
+          .withSlot0(
+              new Slot0Configs()
+                  .withKP(ROLLER_KP)
+                  .withKI(ROLLER_KI)
+                  .withKD(ROLLER_KD)
+                  .withKS(ROLLER_KS)
+                  .withKV(ROLLER_KV));
+
+  public static final double ENGAGED_DEG = 110;
   public static final double RPS = 80;
-  public static final double POSITION_DEG = 110;
 }

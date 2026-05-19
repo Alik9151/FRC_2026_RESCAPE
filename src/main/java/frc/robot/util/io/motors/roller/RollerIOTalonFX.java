@@ -6,6 +6,7 @@ import com.ctre.phoenix6.configs.TalonFXConfiguration;
 import com.ctre.phoenix6.controls.VelocityVoltage;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
 import edu.wpi.first.units.measure.AngularVelocity;
+import frc.robot.util.PhoenixUtil;
 import frc.robot.util.io.motors.MotorIOTalonFX;
 
 public class RollerIOTalonFX extends MotorIOTalonFX implements RollerIO {
@@ -26,6 +27,7 @@ public class RollerIOTalonFX extends MotorIOTalonFX implements RollerIO {
     super(canbus, id, followerIds, config, followerAlignments);
     velocity = leader.getVelocity();
     velocity.setUpdateFrequency(100.0);
+    PhoenixUtil.registerSignals(canbus, velocity);
   }
 
   @Override

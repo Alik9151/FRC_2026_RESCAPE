@@ -20,6 +20,7 @@ import frc.robot.util.io.motors.roller.RollerIOSim;
 import frc.robot.util.io.motors.roller.RollerIOTalonFX;
 import frc.robot.util.io.sensors.CoralSensorIO;
 import frc.robot.util.io.sensors.CoralSensorIOInputsAutoLogged;
+import frc.robot.util.io.sensors.EncoderIOCANcoder;
 import frc.robot.util.subsystems.RobotStateHandler;
 import lombok.Setter;
 import org.littletonrobotics.junction.Logger;
@@ -38,9 +39,14 @@ public class Outtake extends SubsystemBase {
     PivotIO pivotIO =
         switch (Constants.currentMode) {
           case REAL -> new PivotIOTalonFX(
-              Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
-              Constants.CANConstants.OUTTAKE_PIVOT,
-              OuttakeConstants.PIVOT_CONFIG);
+                  Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
+                  Constants.CANConstants.OUTTAKE_PIVOT,
+                  OuttakeConstants.PIVOT_CONFIG)
+              .useCANcoder(
+                  new EncoderIOCANcoder(
+                      Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
+                      Constants.CANConstants.OUTTAKE_ENCODER,
+                      OuttakeConstants.ENCODER_CONFIG));
           case SIM -> new PivotIOSim(
               DCMotor.getKrakenX60(1),
               new MotorIO.MechanismConstraints(

@@ -68,7 +68,7 @@ public class Intake extends SubsystemBase {
   }
 
   public void start() {
-    pivot.runClosedLoop(IntakeConstants.POSITION_DEG);
+    pivot.runClosedLoop(IntakeConstants.ENGAGED_DEG);
     roller.runClosedLoop(IntakeConstants.RPS);
   }
 
