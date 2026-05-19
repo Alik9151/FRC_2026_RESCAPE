@@ -18,9 +18,7 @@ import frc.robot.util.io.motors.roller.Roller;
 import frc.robot.util.io.motors.roller.RollerIO;
 import frc.robot.util.io.motors.roller.RollerIOSim;
 import frc.robot.util.io.motors.roller.RollerIOTalonFX;
-import frc.robot.util.io.sensors.CoralSensorIO;
-import frc.robot.util.io.sensors.CoralSensorIOInputsAutoLogged;
-import frc.robot.util.io.sensors.EncoderIOCANcoder;
+import frc.robot.util.io.sensors.*;
 import frc.robot.util.subsystems.RobotStateHandler;
 import lombok.Setter;
 import org.littletonrobotics.junction.Logger;
@@ -28,6 +26,8 @@ import org.littletonrobotics.junction.Logger;
 public class Outtake extends SubsystemBase {
   private final Pivot pivot;
   private final Roller roller;
+  private final EncoderIO encoder;
+  private final EncoderIOInputsAutoLogged encoderInputs = new EncoderIOInputsAutoLogged();
   @Setter private CoralSensorIO sensor = new CoralSensorIO() {};
   private final CoralSensorIOInputsAutoLogged sensorInputs = new CoralSensorIOInputsAutoLogged();
 
@@ -38,23 +38,32 @@ public class Outtake extends SubsystemBase {
   public Outtake() {
     PivotIO pivotIO =
         switch (Constants.currentMode) {
-          case REAL -> new PivotIOTalonFX(
-                  Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
-                  Constants.CANConstants.OUTTAKE_PIVOT,
-                  OuttakeConstants.PIVOT_CONFIG)
-              .useCANcoder(
-                  new EncoderIOCANcoder(
-                      Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
-                      Constants.CANConstants.OUTTAKE_ENCODER,
-                      OuttakeConstants.ENCODER_CONFIG));
-          case SIM -> new PivotIOSim(
-              DCMotor.getKrakenX60(1),
-              new MotorIO.MechanismConstraints(
-                  OuttakeConstants.ROLLER_GEAR_RATIO, OuttakeConstants.ROLLER_MOI, 1, 0, 180, 0),
-              OuttakeConstants.PIVOT_KP,
-              OuttakeConstants.PIVOT_KD,
-              0);
-          default -> new PivotIO() {};
+          case REAL -> {
+            encoder =
+                new EncoderIOCANcoder(
+                    Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
+                    Constants.CANConstants.OUTTAKE_ENCODER,
+                    OuttakeConstants.ENCODER_CONFIG);
+            yield new PivotIOTalonFX(
+                    Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
+                    Constants.CANConstants.OUTTAKE_PIVOT,
+                    OuttakeConstants.PIVOT_CONFIG)
+                .useCANcoder((EncoderIOCANcoder) encoder);
+          }
+          case SIM -> {
+            encoder = inputs -> {};
+            yield new PivotIOSim(
+                DCMotor.getKrakenX60(1),
+                new MotorIO.MechanismConstraints(
+                    OuttakeConstants.ROLLER_GEAR_RATIO, OuttakeConstants.ROLLER_MOI, 1, 0, 180, 0),
+                OuttakeConstants.PIVOT_KP,
+                OuttakeConstants.PIVOT_KD,
+                0);
+          }
+          default -> {
+            encoder = inputs -> {};
+            yield new PivotIO() {};
+          }
         };
     RollerIO rollerIO =
         switch (Constants.currentMode) {
@@ -80,6 +89,8 @@ public class Outtake extends SubsystemBase {
   public void periodic() {
     pivot.periodic();
     roller.periodic();
+    encoder.updateInputs(encoderInputs);
+    Logger.processInputs("Outtake/PivotEncoder", encoderInputs);
     sensor.updateInputs(sensorInputs);
     Logger.processInputs("Outtake/CoralSensor", sensorInputs);
   }

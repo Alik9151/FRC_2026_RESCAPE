@@ -50,7 +50,11 @@ public final class IntakeConstants {
                   .withKS(PIVOT_KS)
                   .withKV(PIVOT_KV)
                   .withKG(PIVOT_KG)
-                  .withGravityType(GravityTypeValue.Arm_Cosine));
+                  .withGravityType(GravityTypeValue.Arm_Cosine))
+          .withMotionMagic(
+              new MotionMagicConfigs()
+                  .withMotionMagicCruiseVelocity(10.0)
+                  .withMotionMagicAcceleration(15.0));
 
   public static final TalonFXConfiguration ROLLER_CONFIG =
       new TalonFXConfiguration()

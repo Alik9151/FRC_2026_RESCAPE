@@ -16,15 +16,10 @@ import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.Angle;
 import frc.robot.util.PhoenixUtil;
 import frc.robot.util.io.motors.MotorIOTalonFX;
-import frc.robot.util.io.sensors.EncoderIO;
 import frc.robot.util.io.sensors.EncoderIOCANcoder;
-import frc.robot.util.io.sensors.EncoderIOInputsAutoLogged;
 import java.util.function.DoubleConsumer;
 
 public class PivotIOTalonFX extends MotorIOTalonFX implements PivotIO {
-  private EncoderIO encoder;
-  private final EncoderIOInputsAutoLogged encoderInputs = new EncoderIOInputsAutoLogged();
-
   private DoubleConsumer positionRequest;
 
   private final StatusSignal<Angle> position;
@@ -65,7 +60,6 @@ public class PivotIOTalonFX extends MotorIOTalonFX implements PivotIO {
   }
 
   public PivotIOTalonFX useCANcoder(EncoderIOCANcoder encoder) {
-    this.encoder = encoder;
     tryUntilOk(
         5,
         () ->
@@ -78,22 +72,19 @@ public class PivotIOTalonFX extends MotorIOTalonFX implements PivotIO {
     return this;
   }
 
-  public PivotIOTalonFX useEncoder(EncoderIO encoder) {
-    this.encoder = encoder;
-    encoder.updateInputs(encoderInputs);
-    leader.setPosition(encoderInputs.position);
-    return this;
-  }
-
   @Override
   public void updateInputs(PivotIOInputs inputs) {
     inputs.positionDeg = position.getValue().in(Degrees);
-    encoder.updateInputs(encoderInputs);
     updateMotorInputs(inputs);
   }
 
   @Override
   public void setPosition(double deg) {
     positionRequest.accept(deg);
+  }
+
+  @Override
+  public void resetPosition(Angle angle) {
+    new Thread(() -> leader.setPosition(angle)).start();
   }
 }

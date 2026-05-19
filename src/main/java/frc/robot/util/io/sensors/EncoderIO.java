@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.Rotations;
 import edu.wpi.first.units.measure.Angle;
 import org.littletonrobotics.junction.AutoLog;
 
+@FunctionalInterface
 public interface EncoderIO {
   @AutoLog
   class EncoderIOInputs {
@@ -12,5 +13,5 @@ public interface EncoderIO {
     public Angle position = Rotations.zero();
   }
 
-  default void updateInputs(EncoderIOInputs inputs) {}
+  void updateInputs(EncoderIOInputs inputs);
 }
