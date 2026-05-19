@@ -44,7 +44,7 @@ public class Pivot {
 
   public void runClosedLoop(double deg) {
     io.setPosition(deg);
-    mode = MotorIO.MotorIOMode.VELOCITY_CONTROL;
+    mode = MotorIO.MotorIOMode.POSITION_CONTROL;
     Logger.recordOutput(name + "/SetpointDeg", deg);
     Logger.recordOutput(name + "/MotorMode", mode);
   }

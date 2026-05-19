@@ -60,15 +60,15 @@ public class MotorIOSparkMax implements PivotIO, RollerIO {
   }
 
   public MotorIOSparkMax withPositionControlType(SparkBase.ControlType controlType) {
-      switch (controlType) {
-          case kPosition:
-          case kMAXMotionPositionControl:
-              this.positionControlType = controlType;
-              break;
-          default:
-              throw new IllegalArgumentException("ControlType not supported: " + controlType);
-      }
-      return this;
+    switch (controlType) {
+      case kPosition:
+      case kMAXMotionPositionControl:
+        this.positionControlType = controlType;
+        break;
+      default:
+        throw new IllegalArgumentException("ControlType not supported: " + controlType);
+    }
+    return this;
   }
 
   private void updateMotorInputs(MotorIOInputs inputs) {
@@ -92,6 +92,7 @@ public class MotorIOSparkMax implements PivotIO, RollerIO {
   @Override
   public void updateInputs(RollerIOInputs inputs) {
     inputs.velocityRPS = leaderEncoder.getVelocity();
+    updateMotorInputs(inputs);
   }
 
   @Override

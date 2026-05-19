@@ -32,8 +32,8 @@ public class RollerIOTalonFX extends MotorIOTalonFX implements RollerIO {
 
   @Override
   public void updateInputs(RollerIOInputs inputs) {
-    updateMotorInputs(inputs);
     inputs.velocityRPS = velocity.getValueAsDouble();
+    updateMotorInputs(inputs);
   }
 
   @Override

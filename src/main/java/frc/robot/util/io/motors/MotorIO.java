@@ -18,8 +18,6 @@ public interface MotorIO {
     VOLTAGE_CONTROL,
     POSITION_CONTROL,
     VELOCITY_CONTROL,
-    TRAPEZOIDAL_POSITION_CONTROL,
-    EXPONENTIAL_POSITION_CONTROL,
   }
 
   record MechanismConstraints(
