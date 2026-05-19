@@ -1,32 +1,30 @@
 package frc.robot.subsystems.outtake;
 
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.configs.MotorOutputConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.*;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public final class OuttakeConstants {
-  public static final double OUTTAKE_ROLLER_GEAR_RATIO = 1;
-  public static final double OUTTAKE_ROLLER_MOI = 0.002;
+  public static final double ROLLER_GEAR_RATIO = 1;
+  public static final double ROLLER_MOI = 0.002;
 
-  public static final double OUTTAKE_PIVOT_GEAR_RATIO = 1;
-  public static final double OUTTAKE_PIVOT_MOI = 0.05;
+  public static final double PIVOT_GEAR_RATIO = 1;
+  public static final double PIVOT_MOI = 0.05;
 
-  public static final double OUTTAKE_ROLLER_KP = 2.0;
-  public static final double OUTTAKE_ROLLER_KI = 0;
-  public static final double OUTTAKE_ROLLER_KD = 0;
-  public static final double OUTTAKE_ROLLER_KS = 0;
-  public static final double OUTTAKE_ROLLER_KV = 0.12;
+  public static final double ROLLER_KP = 2.0;
+  public static final double ROLLER_KI = 0;
+  public static final double ROLLER_KD = 0;
+  public static final double ROLLER_KS = 0;
+  public static final double ROLLER_KV = 0.12;
 
-  public static final double OUTTAKE_PIVOT_KP = 2.0;
-  public static final double OUTTAKE_PIVOT_KI = 0;
-  public static final double OUTTAKE_PIVOT_KD = 0;
-  public static final double OUTTAKE_PIVOT_KS = 0;
-  public static final double OUTTAKE_PIVOT_KV = 0.12;
+  public static final double PIVOT_KP = 2.0;
+  public static final double PIVOT_KI = 0;
+  public static final double PIVOT_KD = 0;
+  public static final double PIVOT_KS = 0;
+  public static final double PIVOT_KV = 0.12;
 
-  public static final TalonFXConfiguration OUTTAKE_ROLLER_CONFIG =
+  public static final TalonFXConfiguration ROLLER_CONFIG =
       new TalonFXConfiguration()
           .withCurrentLimits(
               new CurrentLimitsConfigs()
@@ -40,13 +38,13 @@ public final class OuttakeConstants {
                   .withNeutralMode(NeutralModeValue.Coast))
           .withSlot0(
               new Slot0Configs()
-                  .withKP(OUTTAKE_ROLLER_KP)
-                  .withKI(OUTTAKE_ROLLER_KI)
-                  .withKD(OUTTAKE_ROLLER_KD)
-                  .withKS(OUTTAKE_ROLLER_KS)
-                  .withKV(OUTTAKE_ROLLER_KV));
+                  .withKP(ROLLER_KP)
+                  .withKI(ROLLER_KI)
+                  .withKD(ROLLER_KD)
+                  .withKS(ROLLER_KS)
+                  .withKV(ROLLER_KV));
 
-  public static final TalonFXConfiguration OUTTAKE_PIVOT_CONFIG =
+  public static final TalonFXConfiguration PIVOT_CONFIG =
       new TalonFXConfiguration()
           .withCurrentLimits(
               new CurrentLimitsConfigs()
@@ -58,14 +56,20 @@ public final class OuttakeConstants {
               new MotorOutputConfigs()
                   .withInverted(InvertedValue.CounterClockwise_Positive)
                   .withNeutralMode(NeutralModeValue.Coast))
+          .withFeedback(
+              new FeedbackConfigs()
+                  .withFeedbackSensorSource(FeedbackSensorSourceValue.RotorSensor)
+                  .withSensorToMechanismRatio(PIVOT_GEAR_RATIO))
           .withSlot0(
               new Slot0Configs()
-                  .withKP(OUTTAKE_PIVOT_KP)
-                  .withKI(OUTTAKE_PIVOT_KI)
-                  .withKD(OUTTAKE_PIVOT_KD)
-                  .withKS(OUTTAKE_PIVOT_KS)
-                  .withKV(OUTTAKE_PIVOT_KV));
+                  .withKP(PIVOT_KP)
+                  .withKI(PIVOT_KI)
+                  .withKD(PIVOT_KD)
+                  .withKS(PIVOT_KS)
+                  .withKV(PIVOT_KV));
 
-  public static final double OUTTAKE_RPS = 80;
-  public static final double OUTTAKE_STORED_DEG = 0.0;
+  public static final double RPS = 80;
+  public static final double STOWED_DEG = 0.0;
+  public static final double DROPPING_DEG = 125.0;
+  public static final double DROPPING_DEG_L4 = 90.0;
 }

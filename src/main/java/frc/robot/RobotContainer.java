@@ -254,12 +254,6 @@ public class RobotContainer {
     Command l3Coral = Commands.runOnce(() -> elevator.setState(CORAL_L3));
     Command l4Coral = Commands.runOnce(() -> elevator.setState(CORAL_L4));
 
-    // Intake/Outtake commands
-    Command intakeCommand = intake.intakeCommand();
-    Command outtakeCommand = outtake.outtakeCommand();
-    Command reverseIntake = intake.reverseCommand();
-    Command reverseOuttake = outtake.reverseCommand();
-
     // Auto Drive Commands
     Command driveToPole = AutoControlCommands.driveToReef(drive);
     Command driveToLoading = AutoControlCommands.driveToLoading(drive);
@@ -299,8 +293,6 @@ public class RobotContainer {
           .button(5)
           .onTrue(
               Commands.runOnce(() -> superstructureSim.loadFuel(CoralStationsSide.RIGHT_STATION)));
-      keyboard.button(6).whileTrue(intakeCommand);
-      keyboard.button(7).whileTrue(outtakeCommand);
     }
 
     if (DriverStation.isTest()) {
@@ -311,9 +303,6 @@ public class RobotContainer {
       // driver controls
       driverController.leftBumper().whileTrue(lockWheels);
       driverController.povLeft().onTrue(zeroGyro);
-
-      operatorController.leftBumper().whileTrue(intakeCommand);
-      operatorController.rightBumper().whileTrue(outtakeCommand);
     }
   }
 

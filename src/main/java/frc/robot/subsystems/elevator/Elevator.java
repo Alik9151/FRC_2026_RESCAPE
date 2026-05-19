@@ -83,10 +83,8 @@ public class Elevator extends ExtendedSubsystem {
    * @return A command that stows the elevator then stops motors
    */
   public Command stow() {
-    return idle() // end in startEnd only works on interrupt
-        .beforeStarting(() -> setState(ElevatorState.STOWED))
-        .until(this::hasReachedSetpoint)
-        .finallyDo(() -> io.setOpenLoop(0));
+    return startEnd(() -> setState(ElevatorState.STOWED), () -> io.setOpenLoop(0))
+        .until(this::hasReachedSetpoint);
   }
 
   /**

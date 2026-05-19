@@ -1,32 +1,30 @@
 package frc.robot.subsystems.intake;
 
-import com.ctre.phoenix6.configs.CurrentLimitsConfigs;
-import com.ctre.phoenix6.configs.MotorOutputConfigs;
-import com.ctre.phoenix6.configs.Slot0Configs;
-import com.ctre.phoenix6.configs.TalonFXConfiguration;
+import com.ctre.phoenix6.configs.*;
+import com.ctre.phoenix6.signals.FeedbackSensorSourceValue;
 import com.ctre.phoenix6.signals.InvertedValue;
 import com.ctre.phoenix6.signals.NeutralModeValue;
 
 public final class IntakeConstants {
-  public static final double INTAKE_ROLLER_GEAR_RATIO = 1;
-  public static final double INTAKE_ROLLER_MOI = 0.002;
+  public static final double ROLLER_GEAR_RATIO = 1;
+  public static final double ROLLER_MOI = 0.002;
 
-  public static final double INTAKE_PIVOT_GEAR_RATIO = 1;
-  public static final double INTAKE_PIVOT_MOI = 0.05;
+  public static final double PIVOT_GEAR_RATIO = 1;
+  public static final double PIVOT_MOI = 0.05;
 
-  public static final double INTAKE_ROLLER_KP = 2.0;
-  public static final double INTAKE_ROLLER_KI = 0;
-  public static final double INTAKE_ROLLER_KD = 0;
-  public static final double INTAKE_ROLLER_KS = 0;
-  public static final double INTAKE_ROLLER_KV = 0.12;
+  public static final double ROLLER_KP = 2.0;
+  public static final double ROLLER_KI = 0;
+  public static final double ROLLER_KD = 0;
+  public static final double ROLLER_KS = 0;
+  public static final double ROLLER_KV = 0.12;
 
-  public static final double INTAKE_PIVOT_KP = 2.0;
-  public static final double INTAKE_PIVOT_KI = 0;
-  public static final double INTAKE_PIVOT_KD = 0;
-  public static final double INTAKE_PIVOT_KS = 0;
-  public static final double INTAKE_PIVOT_KV = 0.12;
+  public static final double PIVOT_KP = 2.0;
+  public static final double PIVOT_KI = 0;
+  public static final double PIVOT_KD = 0;
+  public static final double PIVOT_KS = 0;
+  public static final double PIVOT_KV = 0.12;
 
-  public static final TalonFXConfiguration INTAKE_ROLLER_CONFIG =
+  public static final TalonFXConfiguration ROLLER_CONFIG =
       new TalonFXConfiguration()
           .withCurrentLimits(
               new CurrentLimitsConfigs()
@@ -40,13 +38,13 @@ public final class IntakeConstants {
                   .withNeutralMode(NeutralModeValue.Coast))
           .withSlot0(
               new Slot0Configs()
-                  .withKP(INTAKE_ROLLER_KP)
-                  .withKI(INTAKE_ROLLER_KI)
-                  .withKD(INTAKE_ROLLER_KD)
-                  .withKS(INTAKE_ROLLER_KS)
-                  .withKV(INTAKE_ROLLER_KV));
+                  .withKP(ROLLER_KP)
+                  .withKI(ROLLER_KI)
+                  .withKD(ROLLER_KD)
+                  .withKS(ROLLER_KS)
+                  .withKV(ROLLER_KV));
 
-  public static final TalonFXConfiguration INTAKE_PIVOT_CONFIG =
+  public static final TalonFXConfiguration PIVOT_CONFIG =
       new TalonFXConfiguration()
           .withCurrentLimits(
               new CurrentLimitsConfigs()
@@ -58,14 +56,18 @@ public final class IntakeConstants {
               new MotorOutputConfigs()
                   .withInverted(InvertedValue.CounterClockwise_Positive)
                   .withNeutralMode(NeutralModeValue.Coast))
+          .withFeedback(
+              new FeedbackConfigs()
+                  .withFeedbackSensorSource(FeedbackSensorSourceValue.RotorSensor)
+                  .withSensorToMechanismRatio(PIVOT_GEAR_RATIO))
           .withSlot0(
               new Slot0Configs()
-                  .withKP(INTAKE_PIVOT_KP)
-                  .withKI(INTAKE_PIVOT_KI)
-                  .withKD(INTAKE_PIVOT_KD)
-                  .withKS(INTAKE_PIVOT_KS)
-                  .withKV(INTAKE_PIVOT_KV));
+                  .withKP(PIVOT_KP)
+                  .withKI(PIVOT_KI)
+                  .withKD(PIVOT_KD)
+                  .withKS(PIVOT_KS)
+                  .withKV(PIVOT_KV));
 
-  public static final double INTAKE_RPS = 80;
-  public static final double INTAKE_POSITION_DEG = 110;
+  public static final double RPS = 80;
+  public static final double POSITION_DEG = 110;
 }

@@ -10,24 +10,17 @@ import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import frc.robot.util.PhoenixUtil;
-import frc.robot.util.io.motors.pivot.PivotIO;
-import frc.robot.util.io.motors.roller.RollerIO;
 
-public class MotorIOTalonFX implements PivotIO, RollerIO {
-  private final TalonFX leader;
+public class MotorIOTalonFX implements MotorIO {
+  protected final TalonFX leader;
   private final TalonFX[] followers;
 
   private final VoltageOut voltageRequest = new VoltageOut(0);
-  private final PositionVoltage positionRequest = new PositionVoltage(0);
-  private final VelocityVoltage velocityRequest = new VelocityVoltage(0);
   private final CoastOut coastRequest = new CoastOut();
   private final StaticBrake brakeRequest = new StaticBrake();
 
-  private final StatusSignal<Angle> position;
-  private final StatusSignal<AngularVelocity> velocity;
   private final StatusSignal<Voltage> voltage;
   private final StatusSignal<Current> supplyCurrent;
   private final StatusSignal<Current> statorCurrent;
@@ -57,8 +50,6 @@ public class MotorIOTalonFX implements PivotIO, RollerIO {
       follower.getConfigurator().apply(config);
     }
     // Create status signals
-    position = leader.getPosition();
-    velocity = leader.getVelocity();
     voltage = leader.getMotorVoltage();
     supplyCurrent = leader.getSupplyCurrent();
     statorCurrent = leader.getStatorCurrent();
@@ -68,13 +59,11 @@ public class MotorIOTalonFX implements PivotIO, RollerIO {
       followerTemps[i] = followers[i].getDeviceTemp();
     }
     // Register status signals
-    BaseStatusSignal.setUpdateFrequencyForAll(
-        100.0, position, velocity, voltage, supplyCurrent, statorCurrent, temp);
+    BaseStatusSignal.setUpdateFrequencyForAll(50.0, voltage, supplyCurrent, statorCurrent, temp);
     BaseStatusSignal.setUpdateFrequencyForAll(50.0, followerTemps);
     leader.optimizeBusUtilization();
     ParentDevice.optimizeBusUtilizationForAll(followers);
-    PhoenixUtil.registerSignals(
-        canbus, position, velocity, voltage, supplyCurrent, statorCurrent, temp);
+    PhoenixUtil.registerSignals(canbus, voltage, supplyCurrent, statorCurrent, temp);
     PhoenixUtil.registerSignals(canbus, followerTemps);
     leader.setPosition(0);
     // Set follower behavior
@@ -83,9 +72,8 @@ public class MotorIOTalonFX implements PivotIO, RollerIO {
     }
   }
 
-  private void updateMotorInputs(MotorIOInputs inputs) {
-    inputs.connected =
-        BaseStatusSignal.isAllGood(position, velocity, voltage, supplyCurrent, statorCurrent, temp);
+  protected void updateMotorInputs(MotorIOInputs inputs) {
+    inputs.connected = BaseStatusSignal.isAllGood(voltage, supplyCurrent, statorCurrent, temp);
     inputs.appliedVoltage = voltage.getValueAsDouble();
     inputs.supplyCurrentAmps = supplyCurrent.getValueAsDouble();
     inputs.statorCurrentAmps = statorCurrent.getValueAsDouble();
@@ -98,30 +86,8 @@ public class MotorIOTalonFX implements PivotIO, RollerIO {
   }
 
   @Override
-  public void updateInputs(PivotIOInputs inputs) {
-    updateMotorInputs(inputs);
-    inputs.positionDeg = velocity.getValueAsDouble();
-  }
-
-  @Override
-  public void updateInputs(RollerIOInputs inputs) {
-    updateMotorInputs(inputs);
-    inputs.velocityRPS = velocity.getValueAsDouble();
-  }
-
-  @Override
   public void setVoltage(double volts) {
     leader.setControl(voltageRequest.withOutput(volts));
-  }
-
-  @Override
-  public void setPosition(double deg) {
-    leader.setControl(positionRequest.withPosition(Units.degreesToRotations(deg)));
-  }
-
-  @Override
-  public void setVelocity(double rps) {
-    leader.setControl(velocityRequest.withVelocity(rps));
   }
 
   @Override

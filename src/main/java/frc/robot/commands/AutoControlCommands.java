@@ -128,17 +128,16 @@ public class AutoControlCommands {
   private static Command cycleFromLoad(
       Drive drive, Elevator elevator, Intake intake, Outtake outtake) {
     return Commands.repeatingSequence(
-        Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
-        Commands.runOnce(intake::start, intake),
-        Commands.race(driveToLoading(drive), Commands.waitUntil(outtake::hasGamePiece)),
-        Commands.waitUntil(outtake::hasGamePiece),
-        Commands.runOnce(intake::stop, intake),
+        elevator.stow(),
+        intake.intakeCommand().until(outtake::hasGamePiece).deadlineFor(driveToLoading(drive)),
         driveToReef(drive),
-        Commands.runOnce(drive::stopWithX),
+        Commands.runOnce(drive::stopWithX, drive),
         Commands.runOnce(
-            () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
+            () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel())), elevator),
         Commands.waitUntil(elevator::hasReachedSetpoint),
-        Commands.runOnce(outtake::start, outtake),
+        Commands.runOnce(() -> outtake.runPivot(currentPole.getMaxLevel() == 4), outtake),
+        Commands.waitUntil(outtake::hasReachedSetpoint),
+        Commands.runOnce(outtake::startRoller, outtake),
         Commands.waitUntil(() -> !outtake.hasGamePiece())
             .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())),
         Commands.runOnce(outtake::stop, outtake));
@@ -148,18 +147,17 @@ public class AutoControlCommands {
       Drive drive, Elevator elevator, Intake intake, Outtake outtake) {
     return Commands.repeatingSequence(
         driveToReef(drive),
-        Commands.runOnce(drive::stopWithX),
+        Commands.runOnce(drive::stopWithX, drive),
         Commands.runOnce(
-            () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel()))),
+            () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel())), elevator),
         Commands.waitUntil(elevator::hasReachedSetpoint),
-        Commands.runOnce(outtake::start, outtake),
+        Commands.runOnce(() -> outtake.runPivot(currentPole.getMaxLevel() == 4), outtake),
+        Commands.waitUntil(outtake::hasReachedSetpoint),
+        Commands.runOnce(outtake::startRoller, outtake),
         Commands.waitUntil(() -> !outtake.hasGamePiece())
             .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())),
         Commands.runOnce(outtake::stop, outtake),
-        Commands.runOnce(() -> elevator.setState(Elevator.ElevatorState.STOWED), elevator),
-        Commands.runOnce(intake::start, intake),
-        Commands.race(driveToLoading(drive), Commands.waitUntil(outtake::hasGamePiece)),
-        Commands.waitUntil(outtake::hasGamePiece),
-        Commands.runOnce(intake::stop, intake));
+        elevator.stow(),
+        intake.intakeCommand().until(outtake::hasGamePiece).deadlineFor(driveToLoading(drive)));
   }
 }
