@@ -35,7 +35,7 @@ public class Intake extends SubsystemBase {
           case SIM -> new PivotIOSim(
               DCMotor.getKrakenX60(1),
               new MotorIO.MechanismConstraints(
-                  IntakeConstants.ROLLER_GEAR_RATIO, IntakeConstants.ROLLER_MOI, 1, 0, 180, 0),
+                  IntakeConstants.PIVOT_GEAR_RATIO, IntakeConstants.PIVOT_MOI, 1, 0, 180, 0),
               IntakeConstants.PIVOT_KP,
               IntakeConstants.PIVOT_KD,
               0);

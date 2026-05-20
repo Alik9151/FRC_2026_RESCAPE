@@ -38,7 +38,7 @@ public class Pivot {
   public void runOpenLoop(double volts) {
     io.setVoltage(volts);
     mode = MotorIO.MotorIOMode.VOLTAGE_CONTROL;
-    Logger.recordOutput(name + "/SetpointDeg", -1);
+    Logger.recordOutput(name + "/SetpointDeg", -1.0);
     Logger.recordOutput(name + "/MotorMode", mode);
   }
 
@@ -57,7 +57,7 @@ public class Pivot {
       io.coast();
       mode = MotorIO.MotorIOMode.COAST;
     }
-    Logger.recordOutput(name + "/SetpointDeg", -1);
+    Logger.recordOutput(name + "/SetpointDeg", -1.0);
     Logger.recordOutput(name + "/MotorMode", mode);
   }
 

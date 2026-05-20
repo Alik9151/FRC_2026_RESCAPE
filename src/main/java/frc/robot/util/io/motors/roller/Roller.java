@@ -38,7 +38,7 @@ public class Roller {
   public void runOpenLoop(double volts) {
     io.setVoltage(volts);
     mode = MotorIO.MotorIOMode.VOLTAGE_CONTROL;
-    Logger.recordOutput(name + "/SetpointRPS", -1);
+    Logger.recordOutput(name + "/SetpointRPS", -1.0);
     Logger.recordOutput(name + "/MotorMode", mode);
   }
 
@@ -57,7 +57,7 @@ public class Roller {
       io.coast();
       mode = MotorIO.MotorIOMode.COAST;
     }
-    Logger.recordOutput(name + "/SetpointRPS", -1);
+    Logger.recordOutput(name + "/SetpointRPS", -1.0);
     Logger.recordOutput(name + "/MotorMode", mode);
   }
 
