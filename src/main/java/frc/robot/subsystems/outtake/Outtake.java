@@ -5,47 +5,136 @@
 package frc.robot.subsystems.outtake;
 
 import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.Constants;
+import frc.robot.util.io.motors.*;
+import frc.robot.util.io.motors.pivot.Pivot;
+import frc.robot.util.io.motors.pivot.PivotIO;
+import frc.robot.util.io.motors.pivot.PivotIOSim;
+import frc.robot.util.io.motors.pivot.PivotIOTalonFX;
+import frc.robot.util.io.motors.roller.Roller;
+import frc.robot.util.io.motors.roller.RollerIO;
+import frc.robot.util.io.motors.roller.RollerIOSim;
+import frc.robot.util.io.motors.roller.RollerIOTalonFX;
+import frc.robot.util.io.sensors.*;
+import frc.robot.util.subsystems.RobotStateHandler;
+import lombok.Setter;
 import org.littletonrobotics.junction.Logger;
 
 public class Outtake extends SubsystemBase {
-  private final OuttakeIO io;
-  private final OuttakeIOInputsAutoLogged inputs = new OuttakeIOInputsAutoLogged();
+  private final Pivot pivot;
+  private final Roller roller;
+  private final EncoderIO encoder;
+  private final EncoderIOInputsAutoLogged encoderInputs = new EncoderIOInputsAutoLogged();
+  @Setter private CoralSensorIO sensor = new CoralSensorIO() {};
+  private final CoralSensorIOInputsAutoLogged sensorInputs = new CoralSensorIOInputsAutoLogged();
+
+  private double setpointDeg;
 
   private final Debouncer debouncer = new Debouncer(0.1);
 
-  public Outtake(OuttakeIO io) {
-    this.io = io;
+  public Outtake() {
+    PivotIO pivotIO =
+        switch (Constants.currentMode) {
+          case REAL -> {
+            encoder =
+                new EncoderIOCANcoder(
+                    Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
+                    Constants.CANConstants.OUTTAKE_ENCODER,
+                    OuttakeConstants.ENCODER_CONFIG);
+            yield new PivotIOTalonFX(
+                    Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
+                    Constants.CANConstants.OUTTAKE_PIVOT,
+                    OuttakeConstants.PIVOT_CONFIG)
+                .useCANcoder((EncoderIOCANcoder) encoder);
+          }
+          case SIM -> {
+            encoder = inputs -> {};
+            yield new PivotIOSim(
+                DCMotor.getKrakenX60(1),
+                new MotorIO.MechanismConstraints(
+                    OuttakeConstants.ROLLER_GEAR_RATIO, OuttakeConstants.ROLLER_MOI, 1, 0, 180, 0),
+                OuttakeConstants.PIVOT_KP,
+                OuttakeConstants.PIVOT_KD,
+                0);
+          }
+          default -> {
+            encoder = inputs -> {};
+            yield new PivotIO() {};
+          }
+        };
+    RollerIO rollerIO =
+        switch (Constants.currentMode) {
+          case REAL -> new RollerIOTalonFX(
+              Constants.CANConstants.SUPERSTRUCTURE_CAN_BUS,
+              Constants.CANConstants.OUTTAKE_ROLLER,
+              OuttakeConstants.ROLLER_CONFIG);
+          case SIM -> new RollerIOSim(
+              DCMotor.getKrakenX60(1),
+              new MotorIO.MechanismConstraints(
+                  OuttakeConstants.ROLLER_GEAR_RATIO, OuttakeConstants.ROLLER_MOI, 0.2, 0, 0, 0),
+              OuttakeConstants.ROLLER_KP,
+              OuttakeConstants.ROLLER_KD,
+              0);
+          default -> new RollerIO() {};
+        };
+
+    pivot = new Pivot("Outtake/Pivot", pivotIO, RobotStateHandler::isEnabled);
+    roller = new Roller("Outtake/Roller", rollerIO);
   }
 
   @Override
   public void periodic() {
-    io.updateInputs(inputs);
-    Logger.processInputs("Outtake", inputs);
+    pivot.periodic();
+    roller.periodic();
+    encoder.updateInputs(encoderInputs);
+    Logger.processInputs("Outtake/PivotEncoder", encoderInputs);
+    sensor.updateInputs(sensorInputs);
+    Logger.processInputs("Outtake/CoralSensor", sensorInputs);
   }
 
-  public void enable() {
-    io.setVelocity(OuttakeConstants.OUTTAKE_RPS);
+  public void runPivot(boolean isL4) {
+    setpointDeg = isL4 ? OuttakeConstants.DROPPING_DEG_L4 : OuttakeConstants.DROPPING_DEG;
+    pivot.runClosedLoop(setpointDeg);
+  }
+
+  public void startRoller() {
+    roller.runClosedLoop(OuttakeConstants.RPS);
   }
 
   public void reverse() {
-    io.setVelocity(-OuttakeConstants.OUTTAKE_RPS);
+    roller.runClosedLoop(-OuttakeConstants.RPS);
+  }
+
+  public void stopRoller() {
+    roller.stop();
   }
 
   public void stop() {
-    io.stop();
+    setpointDeg = OuttakeConstants.STOWED_DEG;
+    pivot.runClosedLoop(setpointDeg);
+    roller.stop();
+  }
+
+  public double getVelocityRPS() {
+    return roller.getVelocityRPS();
+  }
+
+  public double getPositionDeg() {
+    return pivot.getPositionDeg();
+  }
+
+  public boolean hasReachedSetpoint() {
+    return Math.abs(pivot.getPositionDeg() - setpointDeg) < 3.0;
   }
 
   public boolean hasGamePiece() {
-    return debouncer.calculate(inputs.isLoaded);
+    return debouncer.calculate(sensorInputs.valid && sensorInputs.distanceMillimeters < 100);
   }
 
   public Command outtakeCommand() {
-    return startEnd(this::enable, this::stop);
-  }
-
-  public Command reverseCommand() {
-    return startEnd(this::reverse, this::stop);
+    return startEnd(this::startRoller, this::stopRoller);
   }
 }

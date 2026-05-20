@@ -49,8 +49,14 @@ public final class Constants {
     public static final int ELEVATOR_LEADER = 0;
     public static final int ELEVATOR_FOLLOWER = 0;
 
-    public static final int INTAKE = 0;
-    public static final int OUTTAKE = 0;
+    public static final int INTAKE_PIVOT = 0;
+    public static final int INTAKE_ROLLER = 0;
+
+    public static final int OUTTAKE_PIVOT = 0;
+    public static final int OUTTAKE_ROLLER = 0;
+    public static final int OUTTAKE_ENCODER = 0;
+
+    public static final int CORAL_SENSOR = 0;
   }
 
   public static final class FieldConstants {
@@ -58,6 +64,8 @@ public final class Constants {
         Meters.of(VisionConstants.APRIL_TAG_LAYOUT.getFieldLength());
     public static final Distance FIELD_WIDTH =
         Meters.of(VisionConstants.APRIL_TAG_LAYOUT.getFieldWidth());
+
+    public static final Translation2d LOADING_TRANSLATION = new Translation2d(0.5, 0);
 
     public static final Pose2d LOADING_STATION_LEFT_BLUE =
         VisionConstants.APRIL_TAG_LAYOUT.getTagPose(13).get().toPose2d();
@@ -68,8 +76,8 @@ public final class Constants {
     public static final Pose2d LOADING_STATION_RIGHT_RED =
         VisionConstants.APRIL_TAG_LAYOUT.getTagPose(2).get().toPose2d();
 
-    private static final double REEF_ADJUST_X = 0.6;
-    private static final double REEF_ADJUST_Y = -0.3209;
+    private static final double REEF_ADJUST_X = 0.6; // 0.4
+    private static final double REEF_ADJUST_Y = -0.21; //
 
     public static final Translation2d LEFT_REEF_OFFSET =
         new Translation2d(REEF_ADJUST_X, REEF_ADJUST_Y);

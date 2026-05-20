@@ -9,9 +9,9 @@ import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L1;
 import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L2;
 import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L3;
 import static frc.robot.subsystems.elevator.Elevator.ElevatorState.CORAL_L4;
-import static frc.robot.subsystems.elevator.Elevator.ElevatorState.STOWED;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -39,13 +39,7 @@ import frc.robot.subsystems.elevator.ElevatorIO;
 import frc.robot.subsystems.elevator.ElevatorIOSim;
 import frc.robot.subsystems.elevator.ElevatorIOTalonFX;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.IntakeIO;
-import frc.robot.subsystems.intake.IntakeIOSim;
-import frc.robot.subsystems.intake.IntakeIOTalonFX;
 import frc.robot.subsystems.outtake.Outtake;
-import frc.robot.subsystems.outtake.OuttakeIO;
-import frc.robot.subsystems.outtake.OuttakeIOSim;
-import frc.robot.subsystems.outtake.OuttakeIOTalonFX;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.subsystems.vision.VisionIO;
@@ -55,6 +49,8 @@ import frc.robot.util.PhoenixUtil;
 import frc.robot.util.Reef;
 import frc.robot.util.RobotUtil;
 import frc.robot.util.SuperstructureSim;
+import frc.robot.util.io.sensors.CoralSensorIOLaserCan;
+import frc.robot.util.io.sensors.CoralSensorIOSim;
 import java.util.function.DoubleSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -105,8 +101,9 @@ public class RobotContainer {
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {});
         elevator = new Elevator(new ElevatorIOTalonFX());
-        intake = new Intake(new IntakeIOTalonFX());
-        outtake = new Outtake(new OuttakeIOTalonFX());
+        intake = new Intake();
+        outtake = new Outtake();
+        outtake.setSensor(new CoralSensorIOLaserCan(Constants.CANConstants.CORAL_SENSOR));
         break;
       case SIM:
         SimulatedArena.overrideInstance(new Arena2025Reefscape());
@@ -134,12 +131,13 @@ public class RobotContainer {
                     VisionConstants.CAMERA_1_NAME,
                     VisionConstants.robotToCamera1,
                     driveSimulation::getSimulatedDriveTrainPose));
-
         elevator = new Elevator(new ElevatorIOSim());
+        intake = new Intake();
+        outtake = new Outtake();
         superstructureSim =
-            new SuperstructureSim(elevator, driveSimulation, drive::getChassisSpeeds);
-        intake = new Intake(new IntakeIOSim(superstructureSim));
-        outtake = new Outtake(new OuttakeIOSim(superstructureSim));
+            new SuperstructureSim(
+                elevator, intake, outtake, driveSimulation, drive::getChassisSpeeds);
+        outtake.setSensor(new CoralSensorIOSim(superstructureSim));
         break;
       default:
         // replay
@@ -159,10 +157,11 @@ public class RobotContainer {
                 (pose) -> {});
         vision = new Vision(drive, new VisionIO() {}, new VisionIO() {});
         elevator = new Elevator(new ElevatorIO() {});
+        intake = new Intake();
+        outtake = new Outtake();
         superstructureSim =
-            new SuperstructureSim(elevator, driveSimulation, drive::getChassisSpeeds);
-        intake = new Intake(new IntakeIO() {});
-        outtake = new Outtake(new OuttakeIO() {});
+            new SuperstructureSim(
+                elevator, intake, outtake, driveSimulation, drive::getChassisSpeeds);
     }
     // temporary initial default value
     AutoControlCommands.setReef(new Reef(FieldConstants.BLUE_REEF_APRIL_TAGS));
@@ -182,7 +181,7 @@ public class RobotContainer {
                           ? FieldConstants.RED_REEF_APRIL_TAGS
                           : FieldConstants.BLUE_REEF_APRIL_TAGS);
               AutoControlCommands.setReef(reef);
-              Logger.recordOutput("FieldElements/PolePositions", reef.getPoses());
+              Logger.recordOutput("FieldElements/BranchPositions", reef.getPoses());
             })
         .start();
 
@@ -243,8 +242,13 @@ public class RobotContainer {
     Command zeroGyro = Commands.runOnce(() -> drive.zeroGyro(true), drive).ignoringDisable(true);
 
     // Elevator commands
+    DoubleSupplier elevatorJoystick =
+        () ->
+            -MathUtil.applyDeadband(
+                operatorController.getLeftY(), ControllerConstants.OPERATOR_DEADBAND);
+    Command manualElevator = elevator.manualControl(elevatorJoystick);
     Command elevatorHoming = elevator.homingSequence();
-    Command stowElevator = Commands.runOnce(() -> elevator.setState(STOWED));
+    Command stowElevator = elevator.stow();
     Command l1Coral = Commands.runOnce(() -> elevator.setState(CORAL_L1));
     Command l2Coral = Commands.runOnce(() -> elevator.setState(CORAL_L2));
     Command l3Coral = Commands.runOnce(() -> elevator.setState(CORAL_L3));
@@ -266,19 +270,15 @@ public class RobotContainer {
                         || MathUtil.applyDeadband(
                                 driverController.getLeftX(), ControllerConstants.DRIVER_DEADBAND)
                             != 0.0))
-        .debounce(0.2)
+        .debounce(0.3, Debouncer.DebounceType.kFalling)
         .onTrue(
             Commands.runOnce(fullAuto::cancel)
                 .andThen(
                     () -> AutoControlCommands.setState(AutoControlCommands.AutoState.OVERRIDDEN)))
         .onFalse(fullAuto);
+
     // elevator override
-    DoubleSupplier elevatorJoystick =
-        () ->
-            -MathUtil.applyDeadband(
-                operatorController.getLeftY(), ControllerConstants.OPERATOR_DEADBAND);
-    new Trigger(() -> elevatorJoystick.getAsDouble() != 0.0)
-        .whileTrue(elevator.manualControl(elevatorJoystick));
+    new Trigger(() -> elevatorJoystick.getAsDouble() != 0.0).whileTrue(manualElevator);
 
     if (Constants.currentMode == Constants.Mode.SIM) {
       CommandGenericHID keyboard = new CommandGenericHID(2);
@@ -325,6 +325,7 @@ public class RobotContainer {
   public void updateSimulation() {
     if (Constants.currentMode == Constants.Mode.REAL) return;
 
+    superstructureSim.simulationPeriodic();
     SimulatedArena.getInstance().simulationPeriodic();
     Pose3d[] CoralPoses = SimulatedArena.getInstance().getGamePiecesArrayByType("Coral");
     Pose3d[] AlgaePoses = SimulatedArena.getInstance().getGamePiecesArrayByType("Algae");
@@ -334,7 +335,7 @@ public class RobotContainer {
     // Publish to telemetry using AdvantageKit
     Logger.recordOutput("FieldSimulation/RobotPosition", simPose);
     // to set up the model
-    Logger.recordOutput("FieldSimulation/CoralPositions", CoralPoses);
-    Logger.recordOutput("FieldSimulation/AlgaePositions", AlgaePoses);
+    Logger.recordOutput("FieldSimulation/Coral", CoralPoses);
+    Logger.recordOutput("FieldSimulation/Algae", AlgaePoses);
   }
 }

@@ -2,9 +2,11 @@ package frc.robot.util.subsystems;
 
 import java.util.HashSet;
 import java.util.Set;
+import lombok.Getter;
 
 public class RobotStateHandler {
   private static RobotStateHandler instance;
+  @Getter private static boolean isEnabled;
 
   public static synchronized RobotStateHandler getInstance() {
     if (instance == null) {
@@ -28,10 +30,12 @@ public class RobotStateHandler {
   }
 
   public void disable() {
+    isEnabled = false;
     subsystems.forEach(ExtendedSubsystem::disable);
   }
 
   public void enable() {
+    isEnabled = true;
     subsystems.forEach(ExtendedSubsystem::enable);
   }
 }

@@ -9,17 +9,10 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.util.subsystems.ExtendedSubsystem;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.DoubleSupplier;
 import org.littletonrobotics.junction.Logger;
 
 public class Elevator extends ExtendedSubsystem {
-  public static Angle distanceToAngle(double meters) {
-    // fill in with real formula
-    return Radians.of(meters);
-  }
-
   public enum ElevatorState {
     STOWED,
     CORAL_L1,
@@ -30,18 +23,10 @@ public class Elevator extends ExtendedSubsystem {
     MANUAL_CONTROL
   }
 
-  private static final Map<Integer, ElevatorState> elevatorStateMap = new HashMap<>();
-
-  static {
-    elevatorStateMap.put(0, ElevatorState.STOWED);
-    elevatorStateMap.put(1, ElevatorState.CORAL_L1);
-    elevatorStateMap.put(2, ElevatorState.CORAL_L2);
-    elevatorStateMap.put(3, ElevatorState.CORAL_L3);
-    elevatorStateMap.put(4, ElevatorState.CORAL_L4);
-  }
+  private static final ElevatorState[] elevatorStates = ElevatorState.values();
 
   public static ElevatorState toElevatorState(int level) {
-    return elevatorStateMap.get(level);
+    return elevatorStates[level];
   }
 
   private final ElevatorIO io;
@@ -50,7 +35,7 @@ public class Elevator extends ExtendedSubsystem {
   private ElevatorState setpoint;
   private double setpointRad;
 
-  private boolean elevatorSafetyEngaged;
+  private boolean elevatorSafetyEngaged; // for future impl
 
   public Elevator(ElevatorIO io) {
     this.io = io;
@@ -83,10 +68,31 @@ public class Elevator extends ExtendedSubsystem {
     Logger.recordOutput("Elevator/ElevatorState", setpoint);
   }
 
+  public double getPositionRad() {
+    return inputs.positionRad;
+  }
+
   public boolean hasReachedSetpoint() {
     return Math.abs(setpointRad - inputs.positionRad) < 0.06;
   }
 
+  /**
+   * Allow the elevator to fully drop once it comes within tolerance of the stowed setpoint. This
+   * prevents the PID controller from constantly adjusting to maintain the setpoint while stowed.
+   *
+   * @return A command that stows the elevator then stops motors
+   */
+  public Command stow() {
+    return startEnd(() -> setState(ElevatorState.STOWED), () -> io.setOpenLoop(0))
+        .until(this::hasReachedSetpoint);
+  }
+
+  /**
+   * Run the elevator downwards at a constant voltage until its speed is near zero. At this point,
+   * it has reached the bottom and the encoder can be reset to zero.
+   *
+   * @return A command to home the elevator to recalibrate its position
+   */
   public Command homingSequence() {
     Debouncer homingDebouncer = new Debouncer(0.1);
     Timer homingTimer = new Timer();
@@ -115,6 +121,13 @@ public class Elevator extends ExtendedSubsystem {
             });
   }
 
+  /**
+   * Run the elevator at a voltage proportional to the magnitude supplied.
+   *
+   * @param magnitude Percentage of {@link ElevatorConstants#MAX_MANUAL_VOLTAGE} to run the elevator
+   *     at
+   * @return A command for manual open-loop control of the elevator
+   */
   public Command manualControl(DoubleSupplier magnitude) {
     return startRun(
         () -> setState(ElevatorState.MANUAL_CONTROL),

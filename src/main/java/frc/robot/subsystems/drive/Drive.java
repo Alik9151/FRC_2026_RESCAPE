@@ -38,14 +38,18 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
+import frc.robot.commands.AutoControlCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.LocalADStarAK;
@@ -91,6 +95,11 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
               1),
           getModuleTranslations());
 
+  private static final TrajectoryConfig TRAJECTORY_CONFIG =
+      new TrajectoryConfig(
+          AutoControlCommands.CONSTRAINTS.maxVelocity(),
+          AutoControlCommands.CONSTRAINTS.maxAcceleration());
+
   private static DriveTrainSimulationConfig mapleSimConfig = null;
 
   public static DriveTrainSimulationConfig getMapleSimConfig() {
@@ -135,6 +144,7 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
   private final SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(
           kinematics, rawGyroRotation, lastModulePositions, new Pose2d(3, 3, new Rotation2d()));
+  private final Field2d field = new Field2d();
 
   private final Consumer<Pose2d> resetSimulationPoseCallBack;
 
@@ -174,11 +184,13 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
         (activePath) -> {
           Logger.recordOutput(
               "Odometry/Trajectory", activePath.toArray(new Pose2d[activePath.size()]));
+          field.getObject("path").setPoses(activePath);
         });
     PathPlannerLogging.setLogTargetPoseCallback(
         (targetPose) -> {
           Logger.recordOutput("Odometry/TrajectorySetpoint", targetPose);
         });
+    SmartDashboard.putData(field);
 
     // Configure SysId
     sysId =
@@ -247,6 +259,9 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
 
     // Update gyro alert
     gyroDisconnectedAlert.set(!gyroInputs.connected && Constants.currentMode != Mode.SIM);
+
+    // Update robot pose in Field2d
+    field.setRobotPose(getPose());
   }
 
   /**
