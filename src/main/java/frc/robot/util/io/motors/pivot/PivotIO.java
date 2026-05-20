@@ -6,7 +6,7 @@ import org.littletonrobotics.junction.AutoLog;
 
 public interface PivotIO extends MotorIO {
   @AutoLog
-  class PivotIOInputs extends MotorIO.MotorIOInputs {
+  class PivotIOInputs extends MotorIOInputs {
     public double positionDeg;
   }
 

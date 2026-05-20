@@ -1,20 +1,19 @@
 package frc.robot.util.io.motors.roller;
 
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import frc.robot.util.io.motors.MotorIO;
 import frc.robot.util.io.motors.MotorIOSim;
+
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 public class RollerIOSim extends MotorIOSim implements RollerIO {
   private final DCMotorSim sim;
 
   public RollerIOSim(
       DCMotor motorModel,
-      MotorIO.MechanismConstraints constraints,
+      MechanismConstraints constraints,
       double kP,
       double kD,
       int numFollowers) {

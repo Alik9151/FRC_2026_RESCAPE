@@ -5,7 +5,7 @@ import org.littletonrobotics.junction.AutoLog;
 
 public interface RollerIO extends MotorIO {
   @AutoLog
-  class RollerIOInputs extends MotorIO.MotorIOInputs {
+  class RollerIOInputs extends MotorIOInputs {
     public double velocityRPS;
   }
 

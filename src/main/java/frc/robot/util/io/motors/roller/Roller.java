@@ -1,11 +1,12 @@
 package frc.robot.util.io.motors.roller;
 
-import static edu.wpi.first.units.Units.RotationsPerSecond;
-
 import edu.wpi.first.units.measure.AngularVelocity;
 import frc.robot.util.io.motors.MotorIO;
-import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
+
+import java.util.function.BooleanSupplier;
+
+import static edu.wpi.first.units.Units.RotationsPerSecond;
 
 public class Roller {
   private final String name;

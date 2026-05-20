@@ -1,11 +1,12 @@
 package frc.robot.util.io.motors.pivot;
 
-import static edu.wpi.first.units.Units.Degrees;
-
 import edu.wpi.first.units.measure.Angle;
 import frc.robot.util.io.motors.MotorIO;
-import java.util.function.BooleanSupplier;
 import org.littletonrobotics.junction.Logger;
+
+import java.util.function.BooleanSupplier;
+
+import static edu.wpi.first.units.Units.Degrees;
 
 public class Pivot {
   private final String name;
@@ -59,6 +60,10 @@ public class Pivot {
     }
     Logger.recordOutput(name + "/SetpointDeg", -1.0);
     Logger.recordOutput(name + "/MotorMode", mode);
+  }
+
+  public void resetPosition(Angle newPosition) {
+    io.resetPosition(newPosition);
   }
 
   public Angle getPosition() {
