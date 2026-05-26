@@ -18,7 +18,6 @@ import frc.robot.util.io.motors.roller.Roller;
 import frc.robot.util.io.motors.roller.RollerIO;
 import frc.robot.util.io.motors.roller.RollerIOSim;
 import frc.robot.util.io.motors.roller.RollerIOTalonFX;
-import frc.robot.util.subsystems.RobotStateHandler;
 
 public class Intake extends SubsystemBase {
   private final Pivot pivot;
@@ -57,7 +56,9 @@ public class Intake extends SubsystemBase {
           default -> new RollerIO() {};
         };
 
-    pivot = new Pivot("Intake/Pivot", pivotIO, RobotStateHandler::isEnabled);
+    pivot =
+        new Pivot(
+            "Intake/Pivot", pivotIO, IntakeConstants.PIVOT_CONFIG.CurrentLimits.StatorCurrentLimit);
     roller = new Roller("Intake/Roller", rollerIO);
   }
 

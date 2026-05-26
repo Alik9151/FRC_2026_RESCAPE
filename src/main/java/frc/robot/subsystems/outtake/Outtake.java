@@ -19,7 +19,6 @@ import frc.robot.util.io.motors.roller.RollerIO;
 import frc.robot.util.io.motors.roller.RollerIOSim;
 import frc.robot.util.io.motors.roller.RollerIOTalonFX;
 import frc.robot.util.io.sensors.*;
-import frc.robot.util.subsystems.RobotStateHandler;
 import lombok.Setter;
 import org.littletonrobotics.junction.Logger;
 
@@ -81,7 +80,11 @@ public class Outtake extends SubsystemBase {
           default -> new RollerIO() {};
         };
 
-    pivot = new Pivot("Outtake/Pivot", pivotIO, RobotStateHandler::isEnabled);
+    pivot =
+        new Pivot(
+            "Intake/Pivot",
+            pivotIO,
+            OuttakeConstants.PIVOT_CONFIG.CurrentLimits.StatorCurrentLimit);
     roller = new Roller("Outtake/Roller", rollerIO);
   }
 

@@ -1,5 +1,8 @@
 package frc.robot.util.io.motors.pivot;
 
+import static edu.wpi.first.units.Units.Degrees;
+import static frc.robot.util.PhoenixUtil.tryUntilOk;
+
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
 import com.ctre.phoenix6.configs.FeedbackConfigs;
@@ -14,11 +17,7 @@ import edu.wpi.first.units.measure.Angle;
 import frc.robot.util.PhoenixUtil;
 import frc.robot.util.io.motors.MotorIOTalonFX;
 import frc.robot.util.io.sensors.EncoderIOCANcoder;
-
 import java.util.function.DoubleConsumer;
-
-import static edu.wpi.first.units.Units.Degrees;
-import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 public class PivotIOTalonFX extends MotorIOTalonFX implements PivotIO {
   private DoubleConsumer positionRequest;

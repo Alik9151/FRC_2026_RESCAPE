@@ -1,5 +1,7 @@
 package frc.robot.util.io.motors;
 
+import static frc.robot.util.PhoenixUtil.tryUntilOk;
+
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.CANBus;
 import com.ctre.phoenix6.StatusSignal;
@@ -15,8 +17,6 @@ import edu.wpi.first.units.measure.Current;
 import edu.wpi.first.units.measure.Temperature;
 import edu.wpi.first.units.measure.Voltage;
 import frc.robot.util.PhoenixUtil;
-
-import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 public class MotorIOTalonFX implements MotorIO {
   protected final TalonFX leader;
