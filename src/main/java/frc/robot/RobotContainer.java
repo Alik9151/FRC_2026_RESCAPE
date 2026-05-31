@@ -90,7 +90,7 @@ public class RobotContainer {
   /** The container for the robot. Contains subsystems, OI devices, and commands. */
   public RobotContainer() {
     switch (currentMode) {
-      case REAL:
+      case REAL -> {
         drive =
             new Drive(
                 new GyroIOPigeon2(),
@@ -104,8 +104,8 @@ public class RobotContainer {
         intake = new Intake();
         outtake = new Outtake();
         outtake.setSensor(new CoralSensorIOLaserCan(Constants.CANConstants.CORAL_SENSOR));
-        break;
-      case SIM:
+      }
+      case SIM -> {
         SimulatedArena.overrideInstance(new Arena2025Reefscape());
         SimulatedArena.getInstance().resetFieldForAuto();
         driveSimulation =
@@ -138,8 +138,8 @@ public class RobotContainer {
             new SuperstructureSim(
                 elevator, intake, outtake, driveSimulation, drive::getChassisSpeeds);
         outtake.setSensor(new CoralSensorIOSim(superstructureSim));
-        break;
-      default:
+      }
+      default -> {
         // replay
         SimulatedArena.overrideInstance(new Arena2025Reefscape());
         SimulatedArena.getInstance().resetFieldForAuto();
@@ -162,6 +162,7 @@ public class RobotContainer {
         superstructureSim =
             new SuperstructureSim(
                 elevator, intake, outtake, driveSimulation, drive::getChassisSpeeds);
+      }
     }
     // temporary initial default value
     AutoControlCommands.setReef(new Reef(FieldConstants.BLUE_REEF_APRIL_TAGS));

@@ -107,21 +107,19 @@ public class AutoControlCommands {
     Command startWithLoad = cycleFromLoad(drive, elevator, intake, outtake);
     Command startWithReef = cycleFromReef(drive, elevator, intake, outtake);
     return Commands.deferredProxy(
-            () -> {
-              switch (state) {
-                case LOADING_START:
-                  return startWithLoad;
-                case SCORING_START:
-                  return startWithReef;
-                default:
-                  if (outtake.hasGamePiece()) {
-                    setState(AutoState.SCORING_START);
-                    return startWithReef;
+            () ->
+                switch (state) {
+                  case LOADING_START -> startWithLoad;
+                  case SCORING_START -> startWithReef;
+                  default -> {
+                    if (outtake.hasGamePiece()) {
+                      setState(AutoState.SCORING_START);
+                      yield startWithReef;
+                    }
+                    setState(AutoState.LOADING_START);
+                    yield startWithLoad;
                   }
-                  setState(AutoState.LOADING_START);
-                  return startWithLoad;
-              }
-            })
+                })
         .finallyDo(() -> setState(AutoState.IDLE));
   }
 
