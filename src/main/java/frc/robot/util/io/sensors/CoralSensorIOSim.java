@@ -1,6 +1,6 @@
 package frc.robot.util.io.sensors;
 
-import frc.robot.util.SuperstructureSim;
+import frc.robot.util.sim.SuperstructureSim;
 
 public class CoralSensorIOSim implements CoralSensorIO {
   private final SuperstructureSim sim;

@@ -48,9 +48,10 @@ import frc.robot.util.BetterAutoChooser;
 import frc.robot.util.PhoenixUtil;
 import frc.robot.util.Reef;
 import frc.robot.util.RobotUtil;
-import frc.robot.util.SuperstructureSim;
 import frc.robot.util.io.sensors.CoralSensorIOLaserCan;
 import frc.robot.util.io.sensors.CoralSensorIOSim;
+import frc.robot.util.sim.SimulatedObstacle;
+import frc.robot.util.sim.SuperstructureSim;
 import java.util.function.DoubleSupplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
@@ -256,9 +257,17 @@ public class RobotContainer {
     Command l4Coral = Commands.runOnce(() -> elevator.setState(CORAL_L4));
 
     // Auto Drive Commands
-    Command driveToPole = AutoControlCommands.driveToReef(drive);
-    Command driveToLoading = AutoControlCommands.driveToLoading(drive);
-    Command fullAuto = AutoControlCommands.fullAuto(drive, elevator, intake, outtake);
+    Command driveToPole =
+        AutoControlCommands.driveToReef(drive, vision)
+            .alongWith(
+                Commands.runOnce(
+                    () -> AutoControlCommands.setState(AutoControlCommands.AutoState.DTP_REEF)));
+    Command driveToLoading =
+        AutoControlCommands.driveToLoading(drive, vision)
+            .alongWith(
+                Commands.runOnce(
+                    () -> AutoControlCommands.setState(AutoControlCommands.AutoState.DTP_LOAD)));
+    Command fullAuto = AutoControlCommands.fullAuto(drive, vision, elevator, intake, outtake);
 
     drive.setDefaultCommand(defaultDriveCommand);
     // drive override
@@ -270,6 +279,9 @@ public class RobotContainer {
                             != 0.0
                         || MathUtil.applyDeadband(
                                 driverController.getLeftX(), ControllerConstants.DRIVER_DEADBAND)
+                            != 0.0
+                        || MathUtil.applyDeadband(
+                                driverController.getRightX(), ControllerConstants.DRIVER_DEADBAND)
                             != 0.0))
         .debounce(0.3, Debouncer.DebounceType.kFalling)
         .onTrue(
@@ -294,6 +306,42 @@ public class RobotContainer {
           .button(5)
           .onTrue(
               Commands.runOnce(() -> superstructureSim.loadFuel(CoralStationsSide.RIGHT_STATION)));
+
+      CommandXboxController bot1Controller = new CommandXboxController(3);
+      CommandXboxController bot2Controller = new CommandXboxController(4);
+      SimulatedObstacle[] otherRobots = SimulatedObstacle.createObstacles(2);
+      new Trigger(
+              () ->
+                  MathUtil.applyDeadband(
+                              bot1Controller.getLeftY(), ControllerConstants.DRIVER_DEADBAND)
+                          != 0.0
+                      || MathUtil.applyDeadband(
+                              bot1Controller.getLeftX(), ControllerConstants.DRIVER_DEADBAND)
+                          != 0.0
+                      || MathUtil.applyDeadband(
+                              bot1Controller.getRightX(), ControllerConstants.DRIVER_DEADBAND)
+                          != 0.0)
+          .whileTrue(
+              otherRobots[0].move(
+                  () -> -bot1Controller.getLeftY(),
+                  () -> -bot1Controller.getLeftX(),
+                  () -> -bot1Controller.getRightX()));
+      new Trigger(
+              () ->
+                  MathUtil.applyDeadband(
+                              bot2Controller.getLeftY(), ControllerConstants.DRIVER_DEADBAND)
+                          != 0.0
+                      || MathUtil.applyDeadband(
+                              bot2Controller.getLeftX(), ControllerConstants.DRIVER_DEADBAND)
+                          != 0.0
+                      || MathUtil.applyDeadband(
+                              bot2Controller.getRightX(), ControllerConstants.DRIVER_DEADBAND)
+                          != 0.0)
+          .whileTrue(
+              otherRobots[1].move(
+                  () -> -bot2Controller.getLeftY(),
+                  () -> -bot2Controller.getLeftX(),
+                  () -> -bot2Controller.getRightX()));
     }
 
     if (DriverStation.isTest()) {
@@ -332,6 +380,7 @@ public class RobotContainer {
     Pose3d[] AlgaePoses = SimulatedArena.getInstance().getGamePiecesArrayByType("Algae");
 
     Pose2d simPose = driveSimulation.getSimulatedDriveTrainPose();
+    SimulatedObstacle.periodic();
 
     // Publish to telemetry using AdvantageKit
     Logger.recordOutput("FieldSimulation/RobotPosition", simPose);

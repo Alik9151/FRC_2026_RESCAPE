@@ -4,13 +4,16 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.GenericHID;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import lombok.Setter;
+import org.littletonrobotics.junction.AutoLogOutput;
 
 /**
  * This class contains methods that are used throughout the codebase and are not bound to one
  * subsystem or class.
  */
 public final class RobotUtil {
+  @AutoLogOutput(key = "Drive/Odometry/PoseEstimatorReady")
   public static boolean isPoseEstimatorReady;
+
   @Setter private static CommandXboxController driverController;
   @Setter private static CommandXboxController operatorController;
 

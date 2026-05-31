@@ -20,6 +20,7 @@ import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import com.pathplanner.lib.util.PathPlannerLogging;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
@@ -39,6 +40,7 @@ import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj.DriverStation;
@@ -49,7 +51,6 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
-import frc.robot.commands.AutoControlCommands;
 import frc.robot.generated.TunerConstants;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.LocalADStarAK;
@@ -95,10 +96,11 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
               1),
           getModuleTranslations());
 
+  public static final PathConstraints CONSTRAINTS =
+      new PathConstraints(2.0, 3.0, Units.degreesToRadians(540), Units.degreesToRadians(720));
+
   private static final TrajectoryConfig TRAJECTORY_CONFIG =
-      new TrajectoryConfig(
-          AutoControlCommands.CONSTRAINTS.maxVelocity(),
-          AutoControlCommands.CONSTRAINTS.maxAcceleration());
+      new TrajectoryConfig(CONSTRAINTS.maxVelocity(), CONSTRAINTS.maxAcceleration());
 
   private static DriveTrainSimulationConfig mapleSimConfig = null;
 
@@ -312,6 +314,14 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
     }
     kinematics.resetHeadings(headings);
     stop();
+  }
+
+  public Command driveToPose(Pose2d targetPose) {
+    return defer(
+        () -> {
+          Logger.recordOutput("AutoControl/TargetPose", targetPose);
+          return AutoBuilder.pathfindToPose(targetPose, CONSTRAINTS, 0.0);
+        });
   }
 
   /** Returns a command to run a quasistatic test in the specified direction. */

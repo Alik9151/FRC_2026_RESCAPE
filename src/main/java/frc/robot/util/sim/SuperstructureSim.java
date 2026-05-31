@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.robot.util.sim;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;

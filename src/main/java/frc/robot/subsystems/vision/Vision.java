@@ -16,21 +16,31 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArraySubscriber;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-// import frc.robot.commands.AutoAlign;
 import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
 import frc.robot.util.RobotUtil;
 import java.util.LinkedList;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
+import org.photonvision.PhotonCamera;
 
 public class Vision extends SubsystemBase {
   private final VisionConsumer consumer;
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
   private final Alert[] disconnectedAlerts;
+
+  private final CoprocessorInputsAutoLogged objDetInputs = new CoprocessorInputsAutoLogged();
+
+  private final StructArraySubscriber<Pose2d> robotPosesSubscriber =
+      NetworkTableInstance.getDefault()
+          .getTable(PhotonCamera.kTableName)
+          .getStructArrayTopic("foreignRobotPoses", Pose2d.struct)
+          .subscribe(new Pose2d[0]);
 
   public Vision(VisionConsumer consumer, VisionIO... io) {
     this.consumer = consumer;
@@ -66,6 +76,8 @@ public class Vision extends SubsystemBase {
       io[i].updateInputs(inputs[i]);
       Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
     }
+    objDetInputs.foreignRobotPoses = robotPosesSubscriber.get();
+    Logger.processInputs("Vision/ObjectDetection", objDetInputs);
 
     // Initialize logging values
     List<Pose3d> allTagPoses = new LinkedList<>();
@@ -87,9 +99,7 @@ public class Vision extends SubsystemBase {
       // Add tag poses
       for (int tagId : inputs[cameraIndex].tagIds) {
         var tagPose = APRIL_TAG_LAYOUT.getTagPose(tagId);
-        if (tagPose.isPresent()) {
-          tagPoses.add(tagPose.get());
-        }
+        tagPose.ifPresent(tagPoses::add);
       }
 
       // Loop over pose observations
@@ -170,7 +180,10 @@ public class Vision extends SubsystemBase {
         "Vision/Summary/RobotPosesAccepted", allRobotPosesAccepted.toArray(new Pose3d[0]));
     Logger.recordOutput(
         "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(new Pose3d[0]));
-    Logger.recordOutput("Vision/Pose Estimator Ready", RobotUtil.isPoseEstimatorReady);
+  }
+
+  public Pose2d[] getForeignRobotPoses() {
+    return objDetInputs.foreignRobotPoses;
   }
 
   @FunctionalInterface
