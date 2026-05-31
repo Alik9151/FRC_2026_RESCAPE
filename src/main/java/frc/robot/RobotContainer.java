@@ -257,16 +257,8 @@ public class RobotContainer {
     Command l4Coral = Commands.runOnce(() -> elevator.setState(CORAL_L4));
 
     // Auto Drive Commands
-    Command driveToPole =
-        AutoControlCommands.driveToReef(drive, vision)
-            .alongWith(
-                Commands.runOnce(
-                    () -> AutoControlCommands.setState(AutoControlCommands.AutoState.DTP_REEF)));
-    Command driveToLoading =
-        AutoControlCommands.driveToLoading(drive, vision)
-            .alongWith(
-                Commands.runOnce(
-                    () -> AutoControlCommands.setState(AutoControlCommands.AutoState.DTP_LOAD)));
+    Command driveToPole = AutoControlCommands.driveToReef(drive, vision);
+    Command driveToLoading = AutoControlCommands.driveToLoading(drive, vision);
     Command fullAuto = AutoControlCommands.fullAuto(drive, vision, elevator, intake, outtake);
 
     drive.setDefaultCommand(defaultDriveCommand);

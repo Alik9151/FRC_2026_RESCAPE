@@ -6,6 +6,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.FieldConstants;
@@ -34,7 +35,7 @@ public class AutoControlCommands {
     SCORING_START,
   }
 
-  private static final double ROBOT_RADII = 17.5;
+  private static final double ROBOT_RADII = Units.inchesToMeters(17.5 * 2);
   private static final Transform2d FRONT_RIGHT_OFFSET =
       new Transform2d(ROBOT_RADII, ROBOT_RADII, Rotation2d.kZero);
   private static final Transform2d BOTTOM_LEFT_OFFSET =
