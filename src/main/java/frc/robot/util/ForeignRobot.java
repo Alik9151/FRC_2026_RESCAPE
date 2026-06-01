@@ -21,8 +21,8 @@ public class ForeignRobot {
   private double vy;
   public boolean isVisible;
 
-  private final LinearFilter vxFilter = LinearFilter.singlePoleIIR(0.1, 0.02);
-  private final LinearFilter vyFilter = LinearFilter.singlePoleIIR(0.1, 0.02);
+  private final LinearFilter vxFilter = LinearFilter.singlePoleIIR(0.08, 0.02);
+  private final LinearFilter vyFilter = LinearFilter.singlePoleIIR(0.08, 0.02);
 
   public ForeignRobot(double timeStamp, Translation2d translation) {
     this.timestamp = timeStamp;
@@ -39,8 +39,8 @@ public class ForeignRobot {
   public void updateTranslation(Translation2d newTranslation, double newTimestamp) {
     double deltaTime = newTimestamp - timestamp;
 
-    this.vx = vxFilter.calculate((newTranslation.getX() - newTranslation.getX()) / deltaTime);
-    this.vy = vyFilter.calculate((newTranslation.getY() - newTranslation.getY()) / deltaTime);
+    this.vx = vxFilter.calculate((newTranslation.getX() - translation.getX()) / deltaTime);
+    this.vy = vyFilter.calculate((newTranslation.getY() - translation.getY()) / deltaTime);
 
     this.timestamp = timestamp;
     this.translation = newTranslation;
@@ -50,7 +50,7 @@ public class ForeignRobot {
     Translation2d predictedTranslation =
         new Translation2d(
             translation.getX() + vx * PREDICTION_DT, translation.getY() + vy * PREDICTION_DT);
-    Logger.recordOutput("RandomThingy", new Pose2d(predictedTranslation, Rotation2d.kZero));
+    Logger.recordOutput("PredictedPose", new Pose2d(predictedTranslation, Rotation2d.kZero));
     return Pair.of(
         predictedTranslation.plus(CORNER_OFFSET), predictedTranslation.minus(CORNER_OFFSET));
   }
