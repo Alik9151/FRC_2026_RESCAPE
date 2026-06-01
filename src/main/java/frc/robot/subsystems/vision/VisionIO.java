@@ -7,9 +7,9 @@
 
 package frc.robot.subsystems.vision;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface VisionIO {
@@ -21,11 +21,7 @@ public interface VisionIO {
         new TargetObservation(Rotation2d.kZero, Rotation2d.kZero);
     public PoseObservation[] poseObservations = new PoseObservation[0];
     public int[] tagIds = new int[0];
-  }
-
-  @AutoLog
-  public static class CoprocessorInputs {
-    public Pose2d[] foreignRobotPoses = new Pose2d[0];
+    public Translation2d[] relativeForeignRobots = new Translation2d[0];
   }
 
   /** Represents the angle to a simple target, not used for pose estimation. */

@@ -301,7 +301,7 @@ public class RobotContainer {
 
       CommandXboxController bot1Controller = new CommandXboxController(3);
       CommandXboxController bot2Controller = new CommandXboxController(4);
-      SimulatedObstacle[] otherRobots = SimulatedObstacle.createObstacles(2);
+      SimulatedObstacle[] otherRobots = SimulatedObstacle.createObstacles(2, drive::getPose);
       new Trigger(
               () ->
                   MathUtil.applyDeadband(

@@ -5,6 +5,7 @@ import static edu.wpi.first.units.Units.*;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.networktables.NetworkTableInstance;
 import edu.wpi.first.networktables.StructArrayPublisher;
@@ -12,24 +13,29 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.vision.VisionConstants;
 import frc.robot.util.RobotUtil;
 import java.util.ArrayList;
 import java.util.function.DoubleSupplier;
+import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.GyroSimulation;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonCamera;
 
 public class SimulatedObstacle {
   private static final double MAX_LINEAR_SPEED = 4; // m/s
   private static final double MAX_ANGULAR_SPEED = 5; // rad/s
 
-  private static final StructArrayPublisher<Pose2d> publisher =
+  private static final StructArrayPublisher<Translation2d> publisher =
       NetworkTableInstance.getDefault()
           .getTable(PhotonCamera.kTableName)
-          .getStructArrayTopic("foreignRobotPoses", Pose2d.struct)
+          .getSubTable(VisionConstants.CAMERA_0_NAME)
+          .getStructArrayTopic("foreignRobotPoses", Translation2d.struct)
           .publish();
+  private static Supplier<Pose2d> robotPoseSupplier;
   private static final ArrayList<SimulatedObstacle> obstacles = new ArrayList<>();
   private static Pose2d[] poses = new Pose2d[0];
 
@@ -49,7 +55,8 @@ public class SimulatedObstacle {
   private ChassisSpeeds speeds;
   private double lastTime = -1;
 
-  public static SimulatedObstacle[] createObstacles(int amount) {
+  public static SimulatedObstacle[] createObstacles(int amount, Supplier<Pose2d> poseSupplier) {
+    robotPoseSupplier = poseSupplier;
     SimulatedObstacle[] newObstacles = new SimulatedObstacle[amount];
     for (int i = 0; i < newObstacles.length; i++) {
       SimulatedObstacle newObstacle = new SimulatedObstacle();
@@ -64,7 +71,23 @@ public class SimulatedObstacle {
     for (int i = 0; i < poses.length; i++) {
       poses[i] = obstacles.get(i).pose;
     }
-    publisher.set(poses);
+    Logger.recordOutput("SimulatedObstacles/ActualPoses", poses);
+
+    Translation2d[] translations = new Translation2d[poses.length];
+    for (int i = 0; i < translations.length; i++) {
+      translations[i] = globalPoseToCameraRelative(poses[i]);
+    }
+
+    publisher.set(translations);
+  }
+
+  private static Translation2d globalPoseToCameraRelative(Pose2d pose) {
+    Pose2d robotPose = robotPoseSupplier.get();
+    return pose.getTranslation()
+        .minus(robotPose.getTranslation())
+        .rotateBy(robotPose.getRotation().unaryMinus())
+        .minus(VisionConstants.robotToCamera0.getTranslation().toTranslation2d())
+        .rotateBy(VisionConstants.robotToCamera0.getRotation().toRotation2d().unaryMinus());
   }
 
   private SimulatedObstacle() {

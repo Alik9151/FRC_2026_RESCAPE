@@ -1,12 +1,12 @@
 package frc.robot.commands;
 
+import static frc.robot.subsystems.vision.VisionConstants.*;
+
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.FieldConstants;
@@ -15,6 +15,7 @@ import frc.robot.subsystems.elevator.Elevator;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.outtake.Outtake;
 import frc.robot.subsystems.vision.Vision;
+import frc.robot.util.ForeignRobot;
 import frc.robot.util.Reef;
 import frc.robot.util.Reef.Pole;
 import frc.robot.util.RobotUtil;
@@ -35,11 +36,10 @@ public class AutoControlCommands {
     SCORING_START,
   }
 
-  private static final double ROBOT_RADII = Units.inchesToMeters(17.5 * 2);
-  private static final Transform2d FRONT_RIGHT_OFFSET =
-      new Transform2d(ROBOT_RADII, ROBOT_RADII, Rotation2d.kZero);
-  private static final Transform2d BOTTOM_LEFT_OFFSET =
-      new Transform2d(-ROBOT_RADII, -ROBOT_RADII, Rotation2d.kZero);
+  private static final double MAX_FOREIGN_ROBOT_ERROR_SQUARED = 0.1 * 0.1; // meters
+  private static final double MAX_ROBOT_AGE = 0.2;
+  private static final ArrayList<ForeignRobot> foreignRobots =
+      new ArrayList<>(8); // 8 is a lucky number
 
   @Getter private static AutoState state = AutoState.IDLE;
   @Setter private static Reef reef;
@@ -92,14 +92,50 @@ public class AutoControlCommands {
   }
 
   private static void updateObstacles(Drive drive, Vision vision) {
-    Pose2d[] obstaclePoses = vision.getForeignRobotPoses();
+    Translation2d[] robotTranslations = vision.getForeignRobotTranslations(drive.getPose());
+
+    double currentTime = Timer.getTimestamp();
+
+    foreignRobots.removeIf(
+        robot -> {
+          robot.isVisible = false;
+          return currentTime - robot.getTimestamp() > MAX_ROBOT_AGE;
+        });
+
+    for (int i = 0; i < foreignRobots.size(); i++) {
+      int indexToUpdate = -1;
+      double min = MAX_FOREIGN_ROBOT_ERROR_SQUARED;
+      ForeignRobot foreignRobot = foreignRobots.get(i);
+      for (int j = 0; j < robotTranslations.length; j++) {
+        if (robotTranslations[j] != null) {
+          double distance = foreignRobot.getSquaredDistance(robotTranslations[j]);
+          if (distance < min) {
+            min = distance;
+            indexToUpdate = j;
+          }
+        }
+      }
+      if (indexToUpdate != -1) {
+        // if velocity wrong look at timestamp if not we're geniuses
+        foreignRobot.updateTranslation(robotTranslations[indexToUpdate], currentTime);
+        foreignRobot.isVisible = true;
+        robotTranslations[indexToUpdate] = null;
+      }
+    }
+
+    // leftovers get made into new foreign robots
+    for (int i = 0; i < robotTranslations.length; i++) {
+      if (robotTranslations[i] != null) {
+        foreignRobots.add(new ForeignRobot(currentTime, robotTranslations[i]));
+      }
+    }
+
     ArrayList<Pair<Translation2d, Translation2d>> obstacleCorners =
-        new ArrayList<>(obstaclePoses.length);
-    for (Pose2d pose : obstaclePoses) {
-      obstacleCorners.add(
-          Pair.of(
-              pose.transformBy(FRONT_RIGHT_OFFSET).getTranslation(),
-              pose.transformBy(BOTTOM_LEFT_OFFSET).getTranslation()));
+        new ArrayList<>(robotTranslations.length);
+    for (ForeignRobot robot : foreignRobots) {
+      if (robot.isVisible) {
+        obstacleCorners.add(robot.getPredictedCorners());
+      }
     }
     Pathfinding.setDynamicObstacles(obstacleCorners, drive.getPose().getTranslation());
   }

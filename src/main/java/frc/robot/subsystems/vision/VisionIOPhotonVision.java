@@ -12,6 +12,9 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.StructArraySubscriber;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -23,6 +26,8 @@ public class VisionIOPhotonVision implements VisionIO {
   protected final PhotonCamera camera;
   protected final Transform3d robotToCamera;
 
+  private final StructArraySubscriber<Translation2d> objSubscriber;
+
   /**
    * Creates a new VisionIOPhotonVision.
    *
@@ -32,6 +37,12 @@ public class VisionIOPhotonVision implements VisionIO {
   public VisionIOPhotonVision(String name, Transform3d robotToCamera) {
     camera = new PhotonCamera(name);
     this.robotToCamera = robotToCamera;
+    this.objSubscriber =
+        NetworkTableInstance.getDefault()
+            .getTable(PhotonCamera.kTableName)
+            .getSubTable(name)
+            .getStructArrayTopic("foreignRobotPoses", Translation2d.struct)
+            .subscribe(new Translation2d[0]);
   }
 
   @Override
@@ -123,5 +134,17 @@ public class VisionIOPhotonVision implements VisionIO {
     for (int id : tagIds) {
       inputs.tagIds[i++] = id;
     }
+
+    // Apply camera offset to foreign robot translations
+    Translation2d[] foreignRobots = objSubscriber.get();
+    for (int j = 0; j < foreignRobots.length; j++) {
+      foreignRobots[j] =
+          foreignRobots[j]
+              .rotateBy(robotToCamera.getRotation().toRotation2d())
+              .plus(robotToCamera.getTranslation().toTranslation2d());
+    }
+
+    // Save robot relative foreign robot translations
+    inputs.relativeForeignRobots = foreignRobots;
   }
 }
