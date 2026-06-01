@@ -1,7 +1,5 @@
 package frc.robot.commands;
 
-import static frc.robot.subsystems.vision.VisionConstants.*;
-
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -102,16 +100,15 @@ public class AutoControlCommands {
           return currentTime - robot.getTimestamp() > MAX_ROBOT_AGE;
         });
 
-    for (int i = 0; i < foreignRobots.size(); i++) {
+    for (ForeignRobot foreignRobot : foreignRobots) {
       int indexToUpdate = -1;
       double min = MAX_FOREIGN_ROBOT_ERROR_SQUARED;
-      ForeignRobot foreignRobot = foreignRobots.get(i);
-      for (int j = 0; j < robotTranslations.length; j++) {
-        if (robotTranslations[j] != null) {
-          double distance = foreignRobot.getSquaredDistance(robotTranslations[j]);
+      for (int i = 0; i < robotTranslations.length; i++) {
+        if (robotTranslations[i] != null) {
+          double distance = foreignRobot.getSquaredDistance(robotTranslations[i]);
           if (distance < min) {
             min = distance;
-            indexToUpdate = j;
+            indexToUpdate = i;
           }
         }
       }
@@ -124,9 +121,9 @@ public class AutoControlCommands {
     }
 
     // leftovers get made into new foreign robots
-    for (int i = 0; i < robotTranslations.length; i++) {
-      if (robotTranslations[i] != null) {
-        foreignRobots.add(new ForeignRobot(currentTime, robotTranslations[i]));
+    for (Translation2d robotTranslation : robotTranslations) {
+      if (robotTranslation != null) {
+        foreignRobots.add(new ForeignRobot(currentTime, robotTranslation));
       }
     }
 

@@ -170,6 +170,8 @@ public class Vision extends SubsystemBase {
         "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(new Pose3d[0]));
   }
 
+  // Uncomment to continuously log foreign robots (useful for replay):
+  // @AutoLogOutput(key = "Vision/ForeignRobotTranslations")
   public Translation2d[] getForeignRobotTranslations(Pose2d robotPose) {
     // Instantiate new array
     int length = 0;
