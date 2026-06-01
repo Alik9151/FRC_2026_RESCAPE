@@ -300,8 +300,7 @@ public class RobotContainer {
               Commands.runOnce(() -> superstructureSim.loadFuel(CoralStationsSide.RIGHT_STATION)));
 
       CommandXboxController bot1Controller = new CommandXboxController(3);
-      CommandXboxController bot2Controller = new CommandXboxController(4);
-      SimulatedObstacle[] otherRobots = SimulatedObstacle.createObstacles(2, drive::getPose);
+      SimulatedObstacle[] otherRobots = SimulatedObstacle.createObstacles(1, drive::getPose);
       new Trigger(
               () ->
                   MathUtil.applyDeadband(
@@ -318,22 +317,6 @@ public class RobotContainer {
                   () -> -bot1Controller.getLeftY(),
                   () -> -bot1Controller.getLeftX(),
                   () -> -bot1Controller.getRightX()));
-      new Trigger(
-              () ->
-                  MathUtil.applyDeadband(
-                              bot2Controller.getLeftY(), ControllerConstants.DRIVER_DEADBAND)
-                          != 0.0
-                      || MathUtil.applyDeadband(
-                              bot2Controller.getLeftX(), ControllerConstants.DRIVER_DEADBAND)
-                          != 0.0
-                      || MathUtil.applyDeadband(
-                              bot2Controller.getRightX(), ControllerConstants.DRIVER_DEADBAND)
-                          != 0.0)
-          .whileTrue(
-              otherRobots[1].move(
-                  () -> -bot2Controller.getLeftY(),
-                  () -> -bot2Controller.getLeftX(),
-                  () -> -bot2Controller.getRightX()));
     }
 
     if (DriverStation.isTest()) {

@@ -181,14 +181,10 @@ public class Vision extends SubsystemBase {
     Translation2d[] combined = new Translation2d[length];
     // Combine all foreign pose estimates
     int pos = 0;
-    for (int i = 0; i < inputs.length; i++) {
+    for (VisionIOInputsAutoLogged input : inputs) {
       System.arraycopy(
-          inputs[i].relativeForeignRobots,
-          0,
-          combined,
-          pos,
-          inputs[i].relativeForeignRobots.length);
-      pos += inputs[i].relativeForeignRobots.length;
+          input.relativeForeignRobots, 0, combined, pos, input.relativeForeignRobots.length);
+      pos += input.relativeForeignRobots.length;
     }
     // Translate from robot relative to global translations
     for (int i = 0; i < combined.length; i++) {

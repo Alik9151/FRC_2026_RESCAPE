@@ -8,31 +8,52 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.FunctionalCommand;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.ForeignRobot;
 import java.util.ArrayList;
 import java.util.function.Supplier;
 
-public class driveToPointWithObstaclesCommand extends Command {
-  private final Supplier<Pose2d> getTarget;
-  private final Drive drive;
-  private final Vision vision;
-
+public class Pathing {
   private static final double MAX_FOREIGN_ROBOT_ERROR_SQUARED = 0.1 * 0.1; // meters
   private static final double MAX_ROBOT_AGE = 0.2;
   private static final ArrayList<ForeignRobot> foreignRobots = new ArrayList<>(8);
 
-  private Command pathfindingCommand;
-  private boolean canceled;
-  private Pose2d currentTarget;
+  private static Command pathfindingCommand;
+  private static Pose2d currentTarget;
 
-  public driveToPointWithObstaclesCommand(Supplier<Pose2d> getTarget, Drive drive, Vision vision) {
-    this.getTarget = getTarget;
-    this.drive = drive;
-    this.vision = vision;
-    this.pathfindingCommand = null;
-    this.canceled = false;
+  public static Command driveToPointWithObstacles(
+      Supplier<Pose2d> targetPose, Drive drive, Vision vision) {
+    return new FunctionalCommand(
+        () -> {
+          currentTarget = targetPose.get();
+          CommandScheduler.getInstance().schedule(generatePathfindingCommand(drive, vision));
+        },
+        () -> {
+          Pose2d newTarget = targetPose.get();
+          if (newTarget.equals(currentTarget)) return;
+          if (pathfindingCommand != null) {
+            pathfindingCommand.cancel();
+          }
+          currentTarget = newTarget;
+          CommandScheduler.getInstance().schedule(generatePathfindingCommand(drive, vision));
+        },
+        interrupted -> {
+          if (pathfindingCommand != null) {
+            pathfindingCommand.cancel();
+          }
+        },
+        () -> pathfindingCommand == null,
+        drive);
+  }
+
+  private static Command generatePathfindingCommand(Drive drive, Vision vision) {
+    return pathfindingCommand =
+        drive
+            .driveToPose(currentTarget)
+            .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)))
+            .andThen(() -> pathfindingCommand = null);
   }
 
   private static void updateObstacles(Drive drive, Vision vision) {
@@ -82,44 +103,5 @@ public class driveToPointWithObstaclesCommand extends Command {
       }
     }
     Pathfinding.setDynamicObstacles(obstacleCorners, drive.getPose().getTranslation());
-  }
-
-  private void generatePathfindingCommand() {
-    pathfindingCommand =
-        drive
-            .driveToPose(currentTarget)
-            .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)))
-            .andThen(Commands.runOnce(() -> pathfindingCommand = null));
-    CommandScheduler.getInstance().schedule(pathfindingCommand);
-  }
-
-  @Override
-  public void initialize() {
-    currentTarget = getTarget.get();
-    generatePathfindingCommand();
-  }
-
-  @Override
-  public void execute() {
-    Pose2d newTarget = getTarget.get();
-    if (!newTarget.equals(currentTarget)) {
-      if (pathfindingCommand != null) {
-        pathfindingCommand.cancel();
-      }
-      currentTarget = newTarget;
-      generatePathfindingCommand();
-    }
-  }
-
-  @Override
-  public boolean isFinished() {
-    return pathfindingCommand == null;
-  }
-
-  @Override
-  public void end(boolean interrupted) {
-    if (pathfindingCommand != null) {
-      pathfindingCommand.cancel();
-    }
   }
 }

@@ -2,6 +2,8 @@ package frc.robot.util;
 
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.filter.LinearFilter;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.util.Units;
 import lombok.Getter;
@@ -10,7 +12,7 @@ import org.littletonrobotics.junction.Logger;
 public class ForeignRobot {
   private static final double ROBOT_RADII = Units.inchesToMeters(17.5 * 2);
   private static final Translation2d CORNER_OFFSET = new Translation2d(ROBOT_RADII, ROBOT_RADII);
-  private static final double PREDICTION_DT = 0.5;
+  private static final double PREDICTION_DT = 0.2;
 
   private static int robotCount = 0;
 
@@ -51,7 +53,8 @@ public class ForeignRobot {
     Translation2d predictedTranslation =
         new Translation2d(
             translation.getX() + vx * PREDICTION_DT, translation.getY() + vy * PREDICTION_DT);
-    Logger.recordOutput("Vision/ForeignRobotTranslationsPredicted/" + id, predictedTranslation);
+    Logger.recordOutput(
+        "Vision/ForeignRobotPosesPredicted", new Pose2d(predictedTranslation, Rotation2d.kZero));
     return Pair.of(
         predictedTranslation.plus(CORNER_OFFSET), predictedTranslation.minus(CORNER_OFFSET));
   }

@@ -1,7 +1,5 @@
 package frc.robot.commands;
 
-import static frc.robot.subsystems.vision.VisionConstants.*;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -90,14 +88,14 @@ public class AutoControlCommands {
   }
 
   public static Command driveToReef(Drive drive, Vision vision) {
-    Supplier<Pose2d> getTarget = () -> updateCurrentPole(drive.getPose()).getPose();
-    return new driveToPointWithObstaclesCommand(getTarget, drive, vision)
+    Supplier<Pose2d> targetPose = () -> updateCurrentPole(drive.getPose()).getPose();
+    return Pathing.driveToPointWithObstacles(targetPose, drive, vision)
         .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "SCORE")));
   }
 
   public static Command driveToLoading(Drive drive, Vision vision) {
-    Supplier<Pose2d> getTarget = () -> getClosestLoader(drive.getPose().getTranslation());
-    return new driveToPointWithObstaclesCommand(getTarget, drive, vision)
+    Supplier<Pose2d> targetPose = () -> getClosestLoader(drive.getPose().getTranslation());
+    return Pathing.driveToPointWithObstacles(targetPose, drive, vision)
         .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "LOAD")));
   }
 
