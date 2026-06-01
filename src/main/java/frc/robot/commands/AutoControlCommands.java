@@ -1,10 +1,9 @@
 package frc.robot.commands;
 
-import com.pathplanner.lib.pathfinding.Pathfinding;
-import edu.wpi.first.math.Pair;
+import static frc.robot.subsystems.vision.VisionConstants.*;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.FieldConstants;
@@ -18,6 +17,7 @@ import frc.robot.util.Reef;
 import frc.robot.util.Reef.Pole;
 import frc.robot.util.RobotUtil;
 import java.util.ArrayList;
+import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.Setter;
 import org.littletonrobotics.junction.Logger;
@@ -89,66 +89,16 @@ public class AutoControlCommands {
     return rightLoadingStation;
   }
 
-  private static void updateObstacles(Drive drive, Vision vision) {
-    Translation2d[] robotTranslations = vision.getForeignRobotTranslations(drive.getPose());
-
-    double currentTime = Timer.getTimestamp();
-
-    foreignRobots.removeIf(
-        robot -> {
-          robot.isVisible = false;
-          return currentTime - robot.getTimestamp() > MAX_ROBOT_AGE;
-        });
-
-    for (ForeignRobot foreignRobot : foreignRobots) {
-      int indexToUpdate = -1;
-      double min = MAX_FOREIGN_ROBOT_ERROR_SQUARED;
-      for (int i = 0; i < robotTranslations.length; i++) {
-        if (robotTranslations[i] != null) {
-          double distance = foreignRobot.getSquaredDistance(robotTranslations[i]);
-          if (distance < min) {
-            min = distance;
-            indexToUpdate = i;
-          }
-        }
-      }
-      if (indexToUpdate != -1) {
-        // if velocity wrong look at timestamp if not we're geniuses
-        foreignRobot.updateTranslation(robotTranslations[indexToUpdate], currentTime);
-        foreignRobot.isVisible = true;
-        robotTranslations[indexToUpdate] = null;
-      }
-    }
-
-    // leftovers get made into new foreign robots
-    for (Translation2d robotTranslation : robotTranslations) {
-      if (robotTranslation != null) {
-        foreignRobots.add(new ForeignRobot(currentTime, robotTranslation));
-      }
-    }
-
-    ArrayList<Pair<Translation2d, Translation2d>> obstacleCorners =
-        new ArrayList<>(robotTranslations.length);
-    for (ForeignRobot robot : foreignRobots) {
-      if (robot.isVisible) {
-        obstacleCorners.add(robot.getPredictedCorners());
-      }
-    }
-    Pathfinding.setDynamicObstacles(obstacleCorners, drive.getPose().getTranslation());
-  }
-
   public static Command driveToReef(Drive drive, Vision vision) {
-    return drive
-        .driveToPose(updateCurrentPole(drive.getPose()).getPose())
-        .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "SCORE")))
-        .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)));
+    Supplier<Pose2d> getTarget = () -> updateCurrentPole(drive.getPose()).getPose();
+    return new driveToPointWithObstaclesCommand(getTarget, drive, vision)
+        .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "SCORE")));
   }
 
   public static Command driveToLoading(Drive drive, Vision vision) {
-    return drive
-        .driveToPose(getClosestLoader(drive.getPose().getTranslation()))
-        .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "LOAD")))
-        .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)));
+    Supplier<Pose2d> getTarget = () -> getClosestLoader(drive.getPose().getTranslation());
+    return new driveToPointWithObstaclesCommand(getTarget, drive, vision)
+        .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "LOAD")));
   }
 
   public static Command fullAuto(
