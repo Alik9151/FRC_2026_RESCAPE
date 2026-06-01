@@ -6,6 +6,7 @@ package frc.robot;
 
 import com.pathplanner.lib.commands.FollowPathCommand;
 import com.pathplanner.lib.commands.PathfindingCommand;
+import com.pathplanner.lib.pathfinding.Pathfinding;
 import edu.wpi.first.net.WebServer;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.PowerDistribution;
@@ -84,6 +85,7 @@ public class Robot extends LoggedRobot {
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer();
 
+    Pathfinding.setPathfinder(Constants.pathfinder);
     CommandScheduler.getInstance().schedule(FollowPathCommand.warmupCommand());
     CommandScheduler.getInstance().schedule(PathfindingCommand.warmupCommand());
   }

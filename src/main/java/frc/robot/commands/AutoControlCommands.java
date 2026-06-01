@@ -1,7 +1,12 @@
 package frc.robot.commands;
 
+import static frc.robot.subsystems.vision.VisionConstants.*;
+
+import com.pathplanner.lib.pathfinding.Pathfinding;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.FieldConstants;
@@ -15,6 +20,7 @@ import frc.robot.util.Reef;
 import frc.robot.util.Reef.Pole;
 import frc.robot.util.RobotUtil;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.Setter;
@@ -53,7 +59,7 @@ public class AutoControlCommands {
     return currentPole;
   }
 
-  private static Pose2d getClosestLoader(Translation2d robotPose) {
+  private static List<Pose2d> getLoaders(Translation2d robotPose) {
     Pose2d leftLoadingStation;
     Pose2d rightLoadingStation;
 
@@ -80,11 +86,56 @@ public class AutoControlCommands {
                 .plus(
                     FieldConstants.LOADING_TRANSLATION.rotateBy(rightLoadingStation.getRotation())),
             rightLoadingStation.getRotation());
+    return List.of(leftLoadingStation, rightLoadingStation);
+  }
 
-    double distL = robotPose.getSquaredDistance(leftLoadingStation.getTranslation());
-    double distR = robotPose.getSquaredDistance(rightLoadingStation.getTranslation());
-    if (distL < distR) return leftLoadingStation;
-    return rightLoadingStation;
+  private static void updateObstacles(Drive drive, Vision vision) {
+    Translation2d[] robotTranslations = vision.getForeignRobotTranslations(drive.getPose());
+
+    double currentTime = Timer.getTimestamp();
+
+    foreignRobots.removeIf(
+        robot -> {
+          robot.isVisible = false;
+          return currentTime - robot.getTimestamp() > MAX_ROBOT_AGE;
+        });
+
+    for (ForeignRobot foreignRobot : foreignRobots) {
+      int indexToUpdate = -1;
+      double min = MAX_FOREIGN_ROBOT_ERROR_SQUARED;
+      for (int i = 0; i < robotTranslations.length; i++) {
+        if (robotTranslations[i] != null) {
+          double distance = foreignRobot.getSquaredDistance(robotTranslations[i]);
+          if (distance < min) {
+            min = distance;
+            indexToUpdate = i;
+          }
+        }
+      }
+      if (indexToUpdate != -1) {
+        // if velocity wrong look at timestamp if not we're geniuses
+        foreignRobot.updateTranslation(robotTranslations[indexToUpdate], currentTime);
+        foreignRobot.isVisible = true;
+        robotTranslations[indexToUpdate] = null;
+      }
+    }
+
+    // leftovers get made into new foreign robots
+
+    for (Translation2d robotTranslation : robotTranslations) {
+      if (robotTranslation != null) {
+        foreignRobots.add(new ForeignRobot(currentTime, robotTranslation));
+      }
+    }
+
+    ArrayList<Pair<Translation2d, Translation2d>> obstacleCorners =
+        new ArrayList<>(robotTranslations.length);
+    for (ForeignRobot robot : foreignRobots) {
+      if (robot.isVisible) {
+        obstacleCorners.add(robot.getPredictedCorners());
+      }
+    }
+    Pathfinding.setDynamicObstacles(obstacleCorners, drive.getPose().getTranslation());
   }
 
   public static Command driveToReef(Drive drive, Vision vision) {
@@ -94,9 +145,10 @@ public class AutoControlCommands {
   }
 
   public static Command driveToLoading(Drive drive, Vision vision) {
-    Supplier<Pose2d> targetPose = () -> getClosestLoader(drive.getPose().getTranslation());
-    return Pathing.driveToPointWithObstacles(targetPose, drive, vision)
-        .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "LOAD")));
+    return drive
+        .driveToBestPose(getLoaders(drive.getPose().getTranslation()))
+        .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "LOAD")))
+        .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)));
   }
 
   public static Command fullAuto(

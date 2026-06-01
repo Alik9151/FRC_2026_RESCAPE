@@ -10,7 +10,7 @@ import lombok.Getter;
 import org.littletonrobotics.junction.Logger;
 
 public class ForeignRobot {
-  private static final double ROBOT_RADII = Units.inchesToMeters(17.5 * 2);
+  private static final double ROBOT_RADII = Units.inchesToMeters(16 * 2);
   private static final Translation2d CORNER_OFFSET = new Translation2d(ROBOT_RADII, ROBOT_RADII);
   private static final double PREDICTION_DT = 0.2;
 

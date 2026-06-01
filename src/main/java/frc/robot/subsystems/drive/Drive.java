@@ -56,6 +56,7 @@ import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.LocalADStarAK;
 import frc.robot.util.RobotUtil;
 import frc.robot.util.subsystems.ExtendedSubsystem;
+import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
@@ -322,6 +323,20 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
           Logger.recordOutput("AutoControl/TargetPose", targetPose);
           return AutoBuilder.pathfindToPose(targetPose, CONSTRAINTS, 0.0);
         });
+  }
+
+  public Command driveToBestPose(List<Pose2d> targetPoses) {
+    return defer(
+            () -> {
+              List<Translation2d> goals = targetPoses.stream().map(Pose2d::getTranslation).toList();
+
+              Constants.pathfinder.setGoalPositions(goals);
+
+              Logger.recordOutput("AutoControl/TargetPoses", targetPoses.toArray(new Pose2d[0]));
+
+              return AutoBuilder.pathfindToPose(targetPoses.get(0), CONSTRAINTS, 0.0);
+            })
+        .finallyDo((interrupted) -> Constants.pathfinder.unlock());
   }
 
   /** Returns a command to run a quasistatic test in the specified direction. */
