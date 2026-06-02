@@ -52,7 +52,6 @@ public class AutoControlCommands {
 
   public static List<Pose2d> updateCurrentPole(Pose2d currentPose) {
     List<Pose2d> currentPoles = reef.getPoles(4);
-    System.out.println("arr");
     Logger.recordOutput("AutoControl/CurrentBranches", currentPoles.toArray(new Pose2d[0]));
     Logger.recordOutput("AutoControl/ScoringLevel", 4); // FIX THIS LATER IM JUST TESTING
     return currentPoles;
