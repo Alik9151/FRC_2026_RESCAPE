@@ -328,9 +328,7 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
   public Command driveToBestPose(List<Pose2d> targetPoses) {
     return defer(
         () -> {
-          List<Translation2d> goals = targetPoses.stream().map(Pose2d::getTranslation).toList();
-
-          Constants.pathfinder.setGoalPositions(goals);
+          Constants.pathfinder.setGoalPoses(targetPoses);
 
           Logger.recordOutput("AutoControl/TargetPoses", targetPoses.toArray(new Pose2d[0]));
 

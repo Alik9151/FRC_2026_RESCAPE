@@ -70,6 +70,7 @@ public class MultiGoalADStar implements Pathfinder {
   private Translation2d requestRealStartPos;
   private List<GridPosition> requestGoals = new ArrayList<>();
   private List<Translation2d> requestRealGoalPoses = new ArrayList<>();
+  private List<Pose2d> requestRealGoalPose2ds = new ArrayList<>();
 
   private double eps;
 
@@ -85,6 +86,8 @@ public class MultiGoalADStar implements Pathfinder {
 
   private List<Waypoint> currentWaypoints = new ArrayList<>();
   private List<GridPosition> currentPathFull = new ArrayList<>();
+
+  private int finalGoalIndex;
 
   /** Create a new pathfinder that runs AD* locally in a background thread */
   public MultiGoalADStar() {
@@ -168,6 +171,9 @@ public class MultiGoalADStar implements Pathfinder {
    */
   @Override
   public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
+
+    System.out.println("endpoint Index: " + finalGoalIndex);
+
     List<Waypoint> waypoints;
 
     pathLock.readLock().lock();
@@ -180,8 +186,13 @@ public class MultiGoalADStar implements Pathfinder {
       // Not enough points. Something got borked somewhere
       return null;
     }
-
-    return new PathPlannerPath(waypoints, constraints, null, goalEndState);
+    if (finalGoalIndex < requestRealGoalPose2ds.size()) {
+      GoalEndState trueGoalEndState =
+          new GoalEndState(0.0, requestRealGoalPose2ds.get(finalGoalIndex).getRotation());
+      return new PathPlannerPath(waypoints, constraints, null, trueGoalEndState);
+    } else {
+      return new PathPlannerPath(waypoints, constraints, null, goalEndState);
+    }
   }
 
   @Override
@@ -208,6 +219,32 @@ public class MultiGoalADStar implements Pathfinder {
   @Override
   public void setGoalPosition(Translation2d goalPosition) {
     // setGoalPositions(List.of(goalPosition));
+  }
+
+  public void setGoalPoses(List<Pose2d> goalPositions) {
+    List<GridPosition> realGridPositions = new ArrayList<>();
+    List<Translation2d> realGoalPositions = new ArrayList<>();
+    List<Pose2d> requestRealGoalPos2d = new ArrayList<>();
+
+    for (Pose2d goalPose : goalPositions) {
+      Translation2d goalPosition = goalPose.getTranslation();
+      GridPosition gridPos = findClosestNonObstacle(getGridPos(goalPosition), requestObstacles);
+      if (gridPos != null) {
+        realGridPositions.add(gridPos);
+        realGoalPositions.add(goalPosition);
+        requestRealGoalPos2d.add(goalPose);
+      }
+    }
+
+    requestLock.writeLock().lock();
+    requestGoals = realGridPositions;
+    requestRealGoalPoses = realGoalPositions;
+    requestRealGoalPose2ds = requestRealGoalPos2d;
+    requestMinor = true;
+    requestMajor = true;
+    requestReset = true;
+    newPathAvailable.set(false);
+    requestLock.writeLock().unlock();
   }
 
   public void setGoalPositions(List<Translation2d> goalPositions) {
@@ -356,11 +393,17 @@ public class MultiGoalADStar implements Pathfinder {
       computeOrImprovePath(sStart, sGoals, obstacles);
 
       List<GridPosition> pathPositions = extractPath(sStart, sGoals, obstacles);
+
+      GridPosition lastPos =
+          pathPositions.isEmpty() ? null : pathPositions.get(pathPositions.size() - 1);
+      int reachedIndex = sGoals.indexOf(lastPos);
+
       List<Waypoint> waypoints =
           createWaypoints(pathPositions, realStartPos, sGoals, realGoalPoses, obstacles);
 
       pathLock.writeLock().lock();
       currentPathFull = pathPositions;
+      finalGoalIndex = Math.max(0, reachedIndex);
       currentWaypoints = waypoints;
       pathLock.writeLock().unlock();
 
