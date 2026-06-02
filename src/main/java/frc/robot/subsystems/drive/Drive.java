@@ -327,16 +327,15 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
 
   public Command driveToBestPose(List<Pose2d> targetPoses) {
     return defer(
-            () -> {
-              List<Translation2d> goals = targetPoses.stream().map(Pose2d::getTranslation).toList();
+        () -> {
+          List<Translation2d> goals = targetPoses.stream().map(Pose2d::getTranslation).toList();
 
-              Constants.pathfinder.setGoalPositions(goals);
+          Constants.pathfinder.setGoalPositions(goals);
 
-              Logger.recordOutput("AutoControl/TargetPoses", targetPoses.toArray(new Pose2d[0]));
+          Logger.recordOutput("AutoControl/TargetPoses", targetPoses.toArray(new Pose2d[0]));
 
-              return AutoBuilder.pathfindToPose(targetPoses.get(0), CONSTRAINTS, 0.0);
-            })
-        .finallyDo((interrupted) -> Constants.pathfinder.unlock());
+          return AutoBuilder.pathfindToPose(targetPoses.get(0), CONSTRAINTS, 0.0);
+        });
   }
 
   /** Returns a command to run a quasistatic test in the specified direction. */

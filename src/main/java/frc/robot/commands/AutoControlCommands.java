@@ -21,7 +21,6 @@ import frc.robot.util.Reef.Pole;
 import frc.robot.util.RobotUtil;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 import lombok.Getter;
 import lombok.Setter;
 import org.littletonrobotics.junction.Logger;
@@ -139,9 +138,10 @@ public class AutoControlCommands {
   }
 
   public static Command driveToReef(Drive drive, Vision vision) {
-    Supplier<Pose2d> targetPose = () -> updateCurrentPole(drive.getPose()).getPose();
-    return Pathing.driveToPointWithObstacles(targetPose, drive, vision)
-        .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "SCORE")));
+    return drive
+        .driveToBestPose(List.of(updateCurrentPole(drive.getPose()).getPose()))
+        .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "LOAD")))
+        .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)));
   }
 
   public static Command driveToLoading(Drive drive, Vision vision) {
