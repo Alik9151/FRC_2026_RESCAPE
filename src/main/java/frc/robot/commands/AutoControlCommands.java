@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.elevator.Elevator;
@@ -17,7 +18,6 @@ import frc.robot.subsystems.outtake.Outtake;
 import frc.robot.subsystems.vision.Vision;
 import frc.robot.util.ForeignRobot;
 import frc.robot.util.Reef;
-import frc.robot.util.Reef.Pole;
 import frc.robot.util.RobotUtil;
 import java.util.ArrayList;
 import java.util.List;
@@ -44,18 +44,18 @@ public class AutoControlCommands {
 
   @Getter private static AutoState state = AutoState.IDLE;
   @Setter private static Reef reef;
-  private static Pole currentPole;
 
   public static void setState(AutoState newState) {
     state = newState;
     Logger.recordOutput("AutoControl/State", state);
   }
 
-  public static Pole updateCurrentPole(Pose2d currentPose) {
-    currentPole = reef.getBestPole(currentPose.getTranslation());
-    Logger.recordOutput("AutoControl/CurrentBranch", currentPole.getPose());
-    Logger.recordOutput("AutoControl/ScoringLevel", currentPole.getMaxLevel());
-    return currentPole;
+  public static List<Pose2d> updateCurrentPole(Pose2d currentPose) {
+    List<Pose2d> currentPoles = reef.getPoles(4);
+    System.out.println("arr");
+    Logger.recordOutput("AutoControl/CurrentBranches", currentPoles.toArray(new Pose2d[0]));
+    Logger.recordOutput("AutoControl/ScoringLevel", 4); // FIX THIS LATER IM JUST TESTING
+    return currentPoles;
   }
 
   private static List<Pose2d> getLoaders(Translation2d robotPose) {
@@ -139,14 +139,14 @@ public class AutoControlCommands {
 
   public static Command driveToReef(Drive drive, Vision vision) {
     return drive
-        .driveToBestPose(List.of(updateCurrentPole(drive.getPose()).getPose()))
-        .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "LOAD")))
+        .driveToBestPose(() -> updateCurrentPole(drive.getPose()))
+        .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "REEF")))
         .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)));
   }
 
   public static Command driveToLoading(Drive drive, Vision vision) {
     return drive
-        .driveToBestPose(getLoaders(drive.getPose().getTranslation()))
+        .driveToBestPose(() -> getLoaders(drive.getPose().getTranslation()))
         .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "LOAD")))
         .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)));
   }
@@ -183,13 +183,17 @@ public class AutoControlCommands {
         driveToReef(drive, vision),
         Commands.runOnce(drive::stopWithX, drive),
         Commands.runOnce(
-            () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel())), elevator),
+            () -> elevator.setState(Elevator.toElevatorState(4)),
+            elevator), // FIX THIS LATER IM JUST TESTING
         Commands.waitUntil(elevator::hasReachedSetpoint),
-        Commands.runOnce(() -> outtake.runPivot(currentPole.getMaxLevel() == 4), outtake),
+        Commands.runOnce(() -> outtake.runPivot(4 == 4), outtake), // FIX THIS LATER IM JUST TESTING
         Commands.waitUntil(outtake::hasReachedSetpoint),
         Commands.runOnce(outtake::startRoller, outtake),
         Commands.waitUntil(() -> !outtake.hasGamePiece())
-            .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())),
+            .finallyDo(
+                () ->
+                    reef.updatePole(
+                        4, Constants.pathfinder.getGoalPose())), // FIX THIS LATER IM JUST TESTING
         Commands.runOnce(outtake::stop, outtake));
   }
 
@@ -199,13 +203,20 @@ public class AutoControlCommands {
         driveToReef(drive, vision),
         Commands.runOnce(drive::stopWithX, drive),
         Commands.runOnce(
-            () -> elevator.setState(Elevator.toElevatorState(currentPole.getMaxLevel())), elevator),
+            () -> elevator.setState(Elevator.toElevatorState(4)),
+            elevator), // FIX THIS LATER IM JUST TESTING
         Commands.waitUntil(elevator::hasReachedSetpoint),
-        Commands.runOnce(() -> outtake.runPivot(currentPole.getMaxLevel() == 4), outtake),
+        Commands.runOnce(() -> outtake.runPivot(4 == 4), outtake), // FIX THIS LATER IM JUST TESTING
         Commands.waitUntil(outtake::hasReachedSetpoint),
         Commands.runOnce(outtake::startRoller, outtake),
         Commands.waitUntil(() -> !outtake.hasGamePiece())
-            .finallyDo(() -> currentPole.updateLevel(currentPole.getMaxLevel())),
+            .finallyDo(
+                () ->
+                    reef.updatePole(
+                        4,
+                        RobotUtil.isRedAlliance()
+                            ? Constants.pathfinder.getGoalPose()
+                            : Constants.pathfinder.getGoalPose())), // FIX THIS LATER IM
         Commands.runOnce(outtake::stop, outtake),
         elevator.stow(),
         intake

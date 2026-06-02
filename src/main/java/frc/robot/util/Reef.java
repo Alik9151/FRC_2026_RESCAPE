@@ -3,20 +3,32 @@ package frc.robot.util;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import frc.robot.Constants;
 import frc.robot.subsystems.vision.VisionConstants;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
-import lombok.Getter;
-import org.littletonrobotics.junction.Logger;
 
 public class Reef {
-  private final Pole[] poles;
+  private final Pose2d[] polePoses;
+  private final List<List<Integer>> levels;
 
   public Reef(int[] tags) {
-    poles = new Pole[tags.length * 2];
+    polePoses = new Pose2d[tags.length * 2];
+
     for (int i = 0; i < tags.length; i++) {
       addBranchesFromTag(getTagPose2d(tags[i]), i);
+    }
+
+    levels = new ArrayList<>(3);
+    for (int level = 0; level < 3; level++) {
+      ArrayList<Integer> currentLevel = new ArrayList<>(polePoses.length);
+
+      for (int pole = 0; pole < polePoses.length; pole++) {
+        currentLevel.add(pole);
+      }
+
+      this.levels.add(currentLevel);
     }
   }
 
@@ -26,78 +38,48 @@ public class Reef {
   }
 
   private void addBranchesFromTag(Pose2d tag, int tagNum) {
-    poles[tagNum * 2] =
-        new Pole(
-            new Pose2d(
-                tag.getTranslation()
-                    .plus(Constants.FieldConstants.LEFT_REEF_OFFSET.rotateBy(tag.getRotation())),
-                tag.getRotation().plus(Rotation2d.k180deg)));
-    poles[tagNum * 2 + 1] =
-        new Pole(
-            new Pose2d(
-                tag.getTranslation()
-                    .plus(Constants.FieldConstants.RIGHT_REEF_OFFSET.rotateBy(tag.getRotation())),
-                tag.getRotation().plus(Rotation2d.k180deg)));
+    polePoses[tagNum * 2] =
+        new Pose2d(
+            tag.getTranslation()
+                .plus(Constants.FieldConstants.LEFT_REEF_OFFSET.rotateBy(tag.getRotation())),
+            tag.getRotation().plus(Rotation2d.k180deg));
+    polePoses[tagNum * 2 + 1] =
+        new Pose2d(
+            tag.getTranslation()
+                .plus(Constants.FieldConstants.RIGHT_REEF_OFFSET.rotateBy(tag.getRotation())),
+            tag.getRotation().plus(Rotation2d.k180deg));
   }
 
-  public Pole getBestPole(Translation2d robotPose) {
-    double bestDistance = 0;
-    Pole bestPole = null;
-
-    for (Pole pole : poles) {
-      int curLevel = pole.getMaxLevel();
-      if (bestPole == null || curLevel > bestPole.getMaxLevel()) {
-        bestPole = pole;
-        bestDistance = robotPose.getSquaredDistance(pole.getTranslation());
-      } else if (curLevel == bestPole.getMaxLevel()) {
-        double currentDistance = robotPose.getSquaredDistance(pole.getTranslation());
-        if (currentDistance < bestDistance) {
-          bestPole = pole;
-          bestDistance = currentDistance;
-        }
-      }
+  public List<Pose2d> getPoles(int level) {
+    List<Pose2d> levelPoles = new ArrayList<>();
+    for (int i : levels.get(level - 2)) {
+      levelPoles.add(polePoses[i]);
     }
-
-    return bestPole;
+    return levelPoles;
   }
 
   public Pose2d[] getPoses() {
-    Pose2d[] polePoses = new Pose2d[poles.length];
-    for (int i = 0; i < poles.length; i++) {
-      polePoses[i] = poles[i].getPose();
-    }
     return polePoses;
   }
 
-  public static class Pole {
-    @Getter private final Pose2d pose;
-    @Getter private final Translation2d translation;
-    private final boolean[] levels;
-    @Getter private int maxLevel;
-
-    private final String prefix = "FieldElements/Reef/Branch" + hashCode() + "/";
-
-    public Pole(Pose2d pose) {
-      this.pose = pose;
-      this.translation = pose.getTranslation();
-      levels = new boolean[3];
-      maxLevel = 4;
-      Logger.recordOutput(prefix + "Levels", levels);
-      Logger.recordOutput(prefix + "MaxLevel", maxLevel);
+  public void updatePole(int level, Pose2d pole) {
+    int poleNum = findIndex(pole);
+    List<Integer> levelList = levels.get(level - 2);
+    int index = levelList.indexOf(poleNum);
+    if (index == -1) {
+      levelList.add(poleNum);
+    } else {
+      System.out.println("REMOVING");
+      levelList.remove(index);
     }
+  }
 
-    public void updateLevel(int level) {
-      levels[level - 2] = !levels[level - 2];
-      findMaxLevel();
-      Logger.recordOutput(prefix + "Levels", levels);
-      Logger.recordOutput(prefix + "MaxLevel", maxLevel);
+  private int findIndex(Pose2d target) {
+    for (int i = 0; i < polePoses.length; i++) {
+      if (polePoses[i].equals(target)) {
+        return i;
+      }
     }
-
-    private void findMaxLevel() {
-      if (!levels[2]) maxLevel = 4;
-      else if (!levels[1]) maxLevel = 3;
-      else if (!levels[0]) maxLevel = 2;
-      else maxLevel = 0;
-    }
+    return -1;
   }
 }

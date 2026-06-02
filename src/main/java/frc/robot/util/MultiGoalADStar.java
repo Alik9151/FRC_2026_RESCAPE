@@ -171,9 +171,6 @@ public class MultiGoalADStar implements Pathfinder {
    */
   @Override
   public PathPlannerPath getCurrentPath(PathConstraints constraints, GoalEndState goalEndState) {
-
-    System.out.println("endpoint Index: " + finalGoalIndex);
-
     List<Waypoint> waypoints;
 
     pathLock.readLock().lock();
@@ -193,6 +190,12 @@ public class MultiGoalADStar implements Pathfinder {
     } else {
       return new PathPlannerPath(waypoints, constraints, null, goalEndState);
     }
+  }
+
+  public Pose2d getGoalPose() {
+    if (finalGoalIndex < requestRealGoalPose2ds.size())
+      return requestRealGoalPose2ds.get(finalGoalIndex);
+    return null;
   }
 
   @Override

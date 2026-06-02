@@ -60,6 +60,7 @@ import java.util.List;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import org.ironmaple.simulation.drivesims.COTS;
 import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.ironmaple.simulation.drivesims.configs.SwerveModuleSimulationConfig;
@@ -325,9 +326,10 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
         });
   }
 
-  public Command driveToBestPose(List<Pose2d> targetPoses) {
+  public Command driveToBestPose(Supplier<List<Pose2d>> targetPoseSupplier) {
     return defer(
         () -> {
+          List<Pose2d> targetPoses = targetPoseSupplier.get();
           Constants.pathfinder.setGoalPoses(targetPoses);
 
           Logger.recordOutput("AutoControl/TargetPoses", targetPoses.toArray(new Pose2d[0]));
