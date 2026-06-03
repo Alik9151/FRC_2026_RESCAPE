@@ -157,19 +157,26 @@ public class AutoControlCommands {
   // These next two commands are just for fun!
   public static Command driveToCoral(Drive drive, Vision vision) {
     return drive
-        .driveToBestPose(() -> getCoral(drive))
+        .driveToBestPose(() -> getCoralorLoader(drive, vision))
         .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "LOAD")))
         .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)));
   }
 
-  public static List<Pose2d> getCoral(Drive drive) {
+  public static List<Pose2d> getCoralorLoader(Drive drive, Vision vision) {
     Pose3d[] coralPoses = SimulatedArena.getInstance().getGamePiecesArrayByType("Coral");
     List<Pose2d> coralPose2ds = new ArrayList<Pose2d>();
     for (Pose3d coral : coralPoses) {
       Translation2d coralTranslation = coral.getTranslation().toTranslation2d();
       Rotation2d coralRotation =
-          coralTranslation.minus(drive.getPose().getTranslation()).getAngle().rotateBy(Rotation2d.k180deg);
+          coralTranslation
+              .minus(drive.getPose().getTranslation())
+              .getAngle()
+              .rotateBy(Rotation2d.k180deg);
       coralPose2ds.add(new Pose2d(coralTranslation, coralRotation));
+    }
+
+    if (coralPose2ds.size() == 0) {
+      return getLoaders(drive.getPose().getTranslation());
     }
     return coralPose2ds;
   }

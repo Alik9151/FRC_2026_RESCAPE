@@ -99,7 +99,7 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
           getModuleTranslations());
 
   public static final PathConstraints CONSTRAINTS =
-      new PathConstraints(2.0, 3.0, Units.degreesToRadians(540), Units.degreesToRadians(720));
+      new PathConstraints(3.0, 4.0, Units.degreesToRadians(640), Units.degreesToRadians(1080));
 
   private static final TrajectoryConfig TRAJECTORY_CONFIG =
       new TrajectoryConfig(CONSTRAINTS.maxVelocity(), CONSTRAINTS.maxAcceleration());
