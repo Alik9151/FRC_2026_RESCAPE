@@ -98,7 +98,12 @@ public class Reef {
   }
 
   public int getLevel() { // Finish this
-    if (openSpots[2] > 10) return 4;
-    return 3;
+    if (openSpots[2] > 8) return 4;
+    if (openSpots[1] > 8) return 3;
+    if (openSpots[0] > 8) return 2;
+    if (openSpots[2] > 0) return 4;
+    if (openSpots[1] > 0) return 3;
+    if (openSpots[1] > 0) return 2;
+    return 1;
   }
 }

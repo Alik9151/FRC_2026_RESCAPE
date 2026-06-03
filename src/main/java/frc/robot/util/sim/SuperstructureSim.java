@@ -1,8 +1,6 @@
 package frc.robot.util.sim;
 
-import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Meters;
-import static edu.wpi.first.units.Units.MetersPerSecond;
 
 import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -130,21 +128,22 @@ public class SuperstructureSim {
       return;
     }
 
-    Translation3d localCoralTranslation = localCoral.getTranslation();
+    //Had to disable this cause it messes with tracking the coral
+    //   Translation3d localCoralTranslation = localCoral.getTranslation();
 
-    ReefscapeCoralOnFly coralOnFly =
-        new ReefscapeCoralOnFly(
-            swerveDriveSimulation.getSimulatedDriveTrainPose().getTranslation(),
-            new Translation2d(localCoralTranslation.getX(), localCoralTranslation.getY()),
-            chassisSpeeds.get(),
-            swerveDriveSimulation.getSimulatedDriveTrainPose().getRotation(),
-            Meters.of(localCoralTranslation.getZ()),
-            MetersPerSecond.of(-1),
-            Degrees.of(outtake.getPositionDeg()));
+    //   ReefscapeCoralOnFly coralOnFly =
+    //       new ReefscapeCoralOnFly(
+    //           swerveDriveSimulation.getSimulatedDriveTrainPose().getTranslation(),
+    //           new Translation2d(localCoralTranslation.getX(), localCoralTranslation.getY()),
+    //           chassisSpeeds.get(),
+    //           swerveDriveSimulation.getSimulatedDriveTrainPose().getRotation(),
+    //           Meters.of(localCoralTranslation.getZ()),
+    //           MetersPerSecond.of(-1),
+    //           Degrees.of(outtake.getPositionDeg()));
 
-    coralOnFly.enableBecomesGamePieceOnFieldAfterTouchGround();
+    //   coralOnFly.enableBecomesGamePieceOnFieldAfterTouchGround();
 
-    SimulatedArena.getInstance().addGamePieceProjectile(coralOnFly);
+    //   SimulatedArena.getInstance().addGamePieceProjectile(coralOnFly);
   }
 
   public void loadFuel(CoralStationsSide side) {

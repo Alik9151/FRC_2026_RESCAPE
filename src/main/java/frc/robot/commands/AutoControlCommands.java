@@ -5,6 +5,8 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -23,6 +25,7 @@ import java.util.ArrayList;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import org.ironmaple.simulation.SimulatedArena;
 import org.littletonrobotics.junction.Logger;
 
 public class AutoControlCommands {
@@ -151,6 +154,26 @@ public class AutoControlCommands {
         .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)));
   }
 
+  // These next two commands are just for fun!
+  public static Command driveToCoral(Drive drive, Vision vision) {
+    return drive
+        .driveToBestPose(() -> getCoral(drive))
+        .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "LOAD")))
+        .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)));
+  }
+
+  public static List<Pose2d> getCoral(Drive drive) {
+    Pose3d[] coralPoses = SimulatedArena.getInstance().getGamePiecesArrayByType("Coral");
+    List<Pose2d> coralPose2ds = new ArrayList<Pose2d>();
+    for (Pose3d coral : coralPoses) {
+      Translation2d coralTranslation = coral.getTranslation().toTranslation2d();
+      Rotation2d coralRotation =
+          coralTranslation.minus(drive.getPose().getTranslation()).getAngle().rotateBy(Rotation2d.k180deg);
+      coralPose2ds.add(new Pose2d(coralTranslation, coralRotation));
+    }
+    return coralPose2ds;
+  }
+
   public static Command fullAuto(
       Drive drive, Vision vision, Elevator elevator, Intake intake, Outtake outtake) {
     Command startWithLoad = cycleFromLoad(drive, vision, elevator, intake, outtake);
@@ -179,7 +202,8 @@ public class AutoControlCommands {
         intake
             .intakeCommand()
             .until(outtake::hasGamePiece)
-            .deadlineFor(driveToLoading(drive, vision)),
+            // .deadlineFor(driveToLoading(drive, vision)),
+            .deadlineFor(driveToCoral(drive, vision)), // har har funny command please work
         driveToReef(drive, vision),
         Commands.runOnce(drive::stopWithX, drive),
         Commands.runOnce(
@@ -211,6 +235,7 @@ public class AutoControlCommands {
         intake
             .intakeCommand()
             .until(outtake::hasGamePiece)
-            .deadlineFor(driveToLoading(drive, vision)));
+            // .deadlineFor(driveToLoading(drive, vision)));
+            .deadlineFor(driveToCoral(drive, vision))); // har har funny command please work
   }
 }
