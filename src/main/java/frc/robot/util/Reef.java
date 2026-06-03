@@ -12,11 +12,13 @@ import java.util.Map;
 public class Reef {
   private final Pose2d[] polePoses;
   private final Map<Pose2d, Integer> poleIndexes;
-  private final boolean[][] available;
+  private final boolean[][] open;
+  private final int[] openSpots;
 
   public Reef(int[] tags) {
     polePoses = new Pose2d[tags.length * 2];
     poleIndexes = new HashMap<>(polePoses.length);
+    openSpots = new int[3];
 
     for (int i = 0; i < tags.length; i++) {
       addBranchesFromTag(getTagPose2d(tags[i]), i);
@@ -26,11 +28,12 @@ public class Reef {
       poleIndexes.put(polePoses[i], i);
     }
 
-    available = new boolean[3][polePoses.length];
+    open = new boolean[3][polePoses.length];
 
     for (int level = 0; level < 3; level++) {
+      openSpots[level] = polePoses.length;
       for (int pole = 0; pole < polePoses.length; pole++) {
-        available[level][pole] = true;
+        open[level][pole] = true;
       }
     }
   }
@@ -59,7 +62,7 @@ public class Reef {
     int levelIndex = level - 2;
 
     int count = 0;
-    for (boolean poleAvailable : available[levelIndex]) {
+    for (boolean poleAvailable : open[levelIndex]) {
       if (poleAvailable) {
         count++;
       }
@@ -68,7 +71,7 @@ public class Reef {
     List<Pose2d> levelPoles = new ArrayList<>(count);
 
     for (int i = 0; i < polePoses.length; i++) {
-      if (available[levelIndex][i]) {
+      if (open[levelIndex][i]) {
         levelPoles.add(polePoses[i]);
       }
     }
@@ -86,7 +89,16 @@ public class Reef {
     if (poleIndex == null) {
       return;
     }
+    if (open[level - 2][poleIndex]) {
+      openSpots[level - 2]--;
+    } else {
+      openSpots[level - 2]++;
+    }
+    open[level - 2][poleIndex] = !open[level - 2][poleIndex];
+  }
 
-    available[level - 2][poleIndex] = !available[level - 2][poleIndex];
+  public int getLevel() { // Finish this
+    if (openSpots[2] > 10) return 4;
+    return 3;
   }
 }
