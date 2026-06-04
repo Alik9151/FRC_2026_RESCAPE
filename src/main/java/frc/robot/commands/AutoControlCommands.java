@@ -172,6 +172,8 @@ public class AutoControlCommands {
               .minus(drive.getPose().getTranslation())
               .getAngle()
               .rotateBy(Rotation2d.k180deg);
+      Translation2d offset = new Translation2d(0.35, coralRotation);
+      coralTranslation = coralTranslation.plus(offset);
       coralPose2ds.add(new Pose2d(coralTranslation, coralRotation));
     }
 
