@@ -148,6 +148,7 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
   private final SwerveDrivePoseEstimator poseEstimator =
       new SwerveDrivePoseEstimator(
           kinematics, rawGyroRotation, lastModulePositions, new Pose2d(3, 3, new Rotation2d()));
+  public final LocalADStarAK pathfinder = new LocalADStarAK();
   private final Field2d field = new Field2d();
 
   private final Consumer<Pose2d> resetSimulationPoseCallBack;
@@ -183,7 +184,7 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
         PP_CONFIG,
         () -> DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red,
         this);
-    Pathfinding.setPathfinder(new LocalADStarAK());
+    Pathfinding.setPathfinder(pathfinder);
     PathPlannerLogging.setLogActivePathCallback(
         (activePath) -> {
           Logger.recordOutput(
@@ -330,7 +331,7 @@ public class Drive extends ExtendedSubsystem implements Vision.VisionConsumer {
     return defer(
         () -> {
           List<Pose2d> targetPoses = targetPoseSupplier.get();
-          Constants.pathfinder.setGoalPoses(targetPoses);
+          pathfinder.setGoalPoses(targetPoses);
 
           Logger.recordOutput("AutoControl/TargetPoses", targetPoses.toArray(new Pose2d[0]));
 

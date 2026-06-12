@@ -14,9 +14,6 @@ public class ForeignRobot {
   private static final Translation2d CORNER_OFFSET = new Translation2d(ROBOT_RADII, ROBOT_RADII);
   private static final double PREDICTION_DT = 0.2;
 
-  private static int robotCount = 0;
-
-  private final int id;
   @Getter private double timestamp;
   private Translation2d translation;
   private double vx;
@@ -27,7 +24,6 @@ public class ForeignRobot {
   private final LinearFilter vyFilter = LinearFilter.singlePoleIIR(0.08, 0.02);
 
   public ForeignRobot(double timestamp, Translation2d translation) {
-    this.id = robotCount++;
     this.timestamp = timestamp;
     this.translation = translation;
     this.vx = 0;

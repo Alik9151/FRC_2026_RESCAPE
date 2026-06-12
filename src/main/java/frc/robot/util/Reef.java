@@ -4,20 +4,17 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.Constants;
 import frc.robot.subsystems.vision.VisionConstants;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Reef {
   private final Pose2d[] polePoses;
-  private final Map<Pose2d, Integer> poleIndexes;
+  private final Map<Pose2d, Integer> poleIndices;
   private final boolean[][] open;
   private final int[] openSpots;
 
   public Reef(int[] tags) {
     polePoses = new Pose2d[tags.length * 2];
-    poleIndexes = new HashMap<>(polePoses.length);
+    poleIndices = new HashMap<>(polePoses.length);
     openSpots = new int[3];
 
     for (int i = 0; i < tags.length; i++) {
@@ -25,7 +22,7 @@ public class Reef {
     }
 
     for (int i = 0; i < polePoses.length; i++) {
-      poleIndexes.put(polePoses[i], i);
+      poleIndices.put(polePoses[i], i);
     }
 
     open = new boolean[3][polePoses.length];
@@ -84,11 +81,10 @@ public class Reef {
   }
 
   public void updatePole(int level, Pose2d pole) {
-    Integer poleIndex = poleIndexes.get(pole);
+    if (pole == null) return;
+    Integer poleIndex = poleIndices.get(pole);
+    if (poleIndex == null) return;
 
-    if (poleIndex == null) {
-      return;
-    }
     if (open[level - 2][poleIndex]) {
       openSpots[level - 2]--;
     } else {

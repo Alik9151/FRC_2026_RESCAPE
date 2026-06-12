@@ -1,5 +1,6 @@
 package frc.robot.util;
 
+import com.pathplanner.lib.commands.PathfindingCommand;
 import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
@@ -13,15 +14,7 @@ import edu.wpi.first.wpilibj.Filesystem;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.PriorityQueue;
-import java.util.Queue;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -52,12 +45,9 @@ public class MultiGoalADStar implements Pathfinder {
 
   private final PriorityQueue<Map.Entry<GridPosition, Pair<Double, Double>>> openQueue =
       new PriorityQueue<>(
-          (a, b) -> {
-            int first = Double.compare(a.getValue().getFirst(), b.getValue().getFirst());
-            return first != 0
-                ? first
-                : Double.compare(a.getValue().getSecond(), b.getValue().getSecond());
-          });
+          Comparator.comparingDouble(
+                  (Map.Entry<GridPosition, Pair<Double, Double>> a) -> a.getValue().getFirst())
+              .thenComparingDouble(a -> a.getValue().getSecond()));
   private final HashMap<GridPosition, Pair<Double, Double>> open = new HashMap<>();
 
   private final HashMap<GridPosition, Pair<Double, Double>> incons = new HashMap<>();
@@ -89,8 +79,11 @@ public class MultiGoalADStar implements Pathfinder {
 
   private int finalGoalIndex;
 
-  /** Create a new pathfinder that runs AD* locally in a background thread */
-  public MultiGoalADStar() {
+  /**
+   * Create a new pathfinder that runs AD* locally in a background thread with multiple possible
+   * goals. Package-private, use {@link LocalADStarAK} to instantiate.
+   */
+  MultiGoalADStar() {
     planningThread = new Thread(this::runThread);
 
     requestStart = new GridPosition(0, 0);
@@ -214,35 +207,40 @@ public class MultiGoalADStar implements Pathfinder {
   }
 
   /**
-   * Set the goal position to pathfind to. Delegates to setGoalPositions for a single goal.
+   * Set the goal position to pathfind to. This method is disabled to prevent a {@link
+   * PathfindingCommand} from overriding the list of multiple goal positions.
    *
    * @param goalPosition Goal position on the field. If this is within an obstacle it will be moved
    *     to the nearest non-obstacle node.
    */
   @Override
-  public void setGoalPosition(Translation2d goalPosition) {
-    // setGoalPositions(List.of(goalPosition));
-  }
+  public void setGoalPosition(Translation2d goalPosition) {}
 
+  /**
+   * Set multiple goal poses to pathfind to
+   *
+   * @param goalPositions Goal positions on the field. If this is within an obstacle it will be
+   *     moved to the nearest non-obstacle node.
+   */
   public void setGoalPoses(List<Pose2d> goalPositions) {
-    List<GridPosition> realGridPositions = new ArrayList<>();
+    List<GridPosition> gridPositions = new ArrayList<>();
     List<Translation2d> realGoalPositions = new ArrayList<>();
-    List<Pose2d> requestRealGoalPos2d = new ArrayList<>();
+    List<Pose2d> realGoalPose2ds = new ArrayList<>();
 
     for (Pose2d goalPose : goalPositions) {
       Translation2d goalPosition = goalPose.getTranslation();
       GridPosition gridPos = findClosestNonObstacle(getGridPos(goalPosition), requestObstacles);
       if (gridPos != null) {
-        realGridPositions.add(gridPos);
+        gridPositions.add(gridPos);
         realGoalPositions.add(goalPosition);
-        requestRealGoalPos2d.add(goalPose);
+        realGoalPose2ds.add(goalPose);
       }
     }
 
     requestLock.writeLock().lock();
-    requestGoals = realGridPositions;
+    requestGoals = gridPositions;
     requestRealGoalPoses = realGoalPositions;
-    requestRealGoalPose2ds = requestRealGoalPos2d;
+    requestRealGoalPose2ds = realGoalPose2ds;
     requestMinor = true;
     requestMajor = true;
     requestReset = true;
@@ -250,22 +248,27 @@ public class MultiGoalADStar implements Pathfinder {
     requestLock.writeLock().unlock();
   }
 
+  /**
+   * Set multiple goal translations to pathfind to
+   *
+   * @param goalPositions Goal positions on the field. If this is within an obstacle it will be
+   *     moved to the nearest non-obstacle node.
+   */
   public void setGoalPositions(List<Translation2d> goalPositions) {
-    List<GridPosition> realGridPositions = new ArrayList<>();
+    List<GridPosition> gridPositions = new ArrayList<>();
     List<Translation2d> realGoalPositions = new ArrayList<>();
 
     for (Translation2d goalPosition : goalPositions) {
       GridPosition gridPos = findClosestNonObstacle(getGridPos(goalPosition), requestObstacles);
       if (gridPos != null) {
-        realGridPositions.add(gridPos);
+        gridPositions.add(gridPos);
         realGoalPositions.add(goalPosition);
       }
     }
 
     requestLock.writeLock().lock();
-    requestGoals = realGridPositions;
+    requestGoals = gridPositions;
     requestRealGoalPoses = realGoalPositions;
-
     requestMinor = true;
     requestMajor = true;
     requestReset = true;

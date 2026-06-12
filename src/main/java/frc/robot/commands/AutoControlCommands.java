@@ -1,7 +1,5 @@
 package frc.robot.commands;
 
-import static frc.robot.subsystems.vision.VisionConstants.*;
-
 import com.pathplanner.lib.pathfinding.Pathfinding;
 import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -11,7 +9,6 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import frc.robot.Constants;
 import frc.robot.Constants.FieldConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.elevator.Elevator;
@@ -157,14 +154,14 @@ public class AutoControlCommands {
   // These next two commands are just for fun!
   public static Command driveToCoral(Drive drive, Vision vision) {
     return drive
-        .driveToBestPose(() -> getCoralorLoader(drive, vision))
+        .driveToBestPose(() -> getCoralOrLoader(drive, vision))
         .alongWith(Commands.runOnce(() -> Logger.recordOutput("AutoControl/CurrentTask", "LOAD")))
         .deadlineFor(Commands.run(() -> updateObstacles(drive, vision)));
   }
 
-  public static List<Pose2d> getCoralorLoader(Drive drive, Vision vision) {
+  public static List<Pose2d> getCoralOrLoader(Drive drive, Vision vision) {
     Pose3d[] coralPoses = SimulatedArena.getInstance().getGamePiecesArrayByType("Coral");
-    List<Pose2d> coralPose2ds = new ArrayList<Pose2d>();
+    List<Pose2d> coralPose2ds = new ArrayList<>();
     for (Pose3d coral : coralPoses) {
       Translation2d coralTranslation = coral.getTranslation().toTranslation2d();
       Rotation2d coralRotation =
@@ -177,7 +174,7 @@ public class AutoControlCommands {
       coralPose2ds.add(new Pose2d(coralTranslation, coralRotation));
     }
 
-    if (coralPose2ds.size() == 0) {
+    if (coralPose2ds.isEmpty()) {
       return getLoaders(drive.getPose().getTranslation());
     }
     return coralPose2ds;
@@ -222,7 +219,7 @@ public class AutoControlCommands {
         Commands.waitUntil(outtake::hasReachedSetpoint),
         Commands.runOnce(outtake::startRoller, outtake),
         Commands.waitUntil(() -> !outtake.hasGamePiece())
-            .finallyDo(() -> reef.updatePole(reef.getLevel(), Constants.pathfinder.getGoalPose())),
+            .finallyDo(() -> reef.updatePole(reef.getLevel(), drive.pathfinder.getGoalPose())),
         Commands.runOnce(outtake::stop, outtake));
   }
 
@@ -238,7 +235,7 @@ public class AutoControlCommands {
         Commands.waitUntil(outtake::hasReachedSetpoint),
         Commands.runOnce(outtake::startRoller, outtake),
         Commands.waitUntil(() -> !outtake.hasGamePiece())
-            .finallyDo(() -> reef.updatePole(reef.getLevel(), Constants.pathfinder.getGoalPose())),
+            .finallyDo(() -> reef.updatePole(reef.getLevel(), drive.pathfinder.getGoalPose())),
         Commands.runOnce(outtake::stop, outtake),
         elevator.stow(),
         intake
