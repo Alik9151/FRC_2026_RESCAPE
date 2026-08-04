@@ -5,7 +5,6 @@ import static frc.robot.subsystems.elevator.ElevatorConstants.SETPOINTS;
 
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.units.measure.Angle;
-import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.util.subsystems.ExtendedSubsystem;
@@ -32,10 +31,9 @@ public class Elevator extends ExtendedSubsystem {
   private final ElevatorIO io;
   private final ElevatorIOInputsAutoLogged inputs = new ElevatorIOInputsAutoLogged();
 
-  private ElevatorState setpoint;
   private double setpointRad;
 
-  private boolean elevatorSafetyEngaged; // for future impl
+  private boolean coastOverride;
 
   public Elevator(ElevatorIO io) {
     this.io = io;
@@ -43,8 +41,7 @@ public class Elevator extends ExtendedSubsystem {
 
   @Override
   public void disable() {
-    if (DriverStation.isEStopped()) io.setOpenLoop(0);
-    else io.stop();
+    io.stop();
   }
 
   @Override
@@ -62,10 +59,10 @@ public class Elevator extends ExtendedSubsystem {
         Angle newSetpoint = SETPOINTS.get(newState);
         io.setPosition(newSetpoint);
         setpointRad = newSetpoint.in(Radians);
+        Logger.recordOutput("Elevator/SetpointRad", setpointRad);
     }
 
-    setpoint = newState;
-    Logger.recordOutput("Elevator/ElevatorState", setpoint);
+    Logger.recordOutput("Elevator/ElevatorState", newState);
   }
 
   public double getPositionRad() {
@@ -83,7 +80,7 @@ public class Elevator extends ExtendedSubsystem {
    * @return A command that stows the elevator then stops motors
    */
   public Command stow() {
-    return startEnd(() -> setState(ElevatorState.STOWED), () -> io.setOpenLoop(0))
+    return startEnd(() -> setState(ElevatorState.STOWED), io::coast)
         .until(this::hasReachedSetpoint);
   }
 
@@ -109,7 +106,7 @@ public class Elevator extends ExtendedSubsystem {
                 io.setOpenLoop(0);
                 io.resetPosition(Rotations.of(0));
                 // wait for operation to finish
-                homingTimer.start();
+                homingTimer.restart();
               }
             })
         .until(() -> homingTimer.hasElapsed(0.101))

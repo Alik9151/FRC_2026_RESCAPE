@@ -38,7 +38,7 @@ public final class ElevatorConstants {
           .withMotorOutput(
               new MotorOutputConfigs()
                   .withInverted(InvertedValue.CounterClockwise_Positive)
-                  .withNeutralMode(NeutralModeValue.Coast))
+                  .withNeutralMode(NeutralModeValue.Brake))
           .withFeedback(
               new FeedbackConfigs()
                   .withSensorToMechanismRatio(ELEVATOR_GEAR_RATIO)

@@ -91,6 +91,4 @@ public class ElevatorIOSim implements ElevatorIO {
     elevatorSim.setState(newPosition.in(Units.Radians) * ElevatorConstants.DRUM_RADIUS, 0.0);
     elevatorPID.reset();
   }
-
-  public void setBrake(boolean brake) {}
 }

@@ -33,7 +33,7 @@ public interface ElevatorIO {
 
   default void stop() {}
 
-  default void resetPosition(Angle newPosition) {}
+  default void coast() {}
 
-  default void setBrake(boolean brake) {}
+  default void resetPosition(Angle newPosition) {}
 }

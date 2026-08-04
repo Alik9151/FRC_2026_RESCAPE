@@ -5,14 +5,10 @@ import static frc.robot.util.PhoenixUtil.tryUntilOk;
 
 import com.ctre.phoenix6.BaseStatusSignal;
 import com.ctre.phoenix6.StatusSignal;
-import com.ctre.phoenix6.controls.Follower;
-import com.ctre.phoenix6.controls.MotionMagicVoltage;
-import com.ctre.phoenix6.controls.StaticBrake;
-import com.ctre.phoenix6.controls.VoltageOut;
+import com.ctre.phoenix6.controls.*;
 import com.ctre.phoenix6.hardware.ParentDevice;
 import com.ctre.phoenix6.hardware.TalonFX;
 import com.ctre.phoenix6.signals.MotorAlignmentValue;
-import com.ctre.phoenix6.signals.NeutralModeValue;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.measure.*;
 import frc.robot.Constants;
@@ -23,10 +19,9 @@ public class ElevatorIOTalonFX implements ElevatorIO {
   private final TalonFX leader;
   private final TalonFX follower;
 
-  private final StaticBrake brakeRequest = new StaticBrake();
+  private final CoastOut coastRequest = new CoastOut();
   private final VoltageOut voltageRequest = new VoltageOut(0);
-  private final MotionMagicVoltage positionRequest =
-      new MotionMagicVoltage(0).withOverrideBrakeDurNeutral(true);
+  private final MotionMagicVoltage positionRequest = new MotionMagicVoltage(0);
 
   private final StatusSignal<Angle> position;
   private final StatusSignal<AngularVelocity> velocity;
@@ -133,17 +128,16 @@ public class ElevatorIOTalonFX implements ElevatorIO {
 
   @Override
   public void stop() {
-    leader.setControl(brakeRequest);
+    leader.stopMotor();
+  }
+
+  @Override
+  public void coast() {
+    leader.setControl(coastRequest);
   }
 
   @Override
   public void resetPosition(Angle newPosition) {
     new Thread(() -> leader.setPosition(newPosition)).start();
-  }
-
-  @Override
-  public void setBrake(boolean brake) {
-    new Thread(() -> leader.setNeutralMode(brake ? NeutralModeValue.Brake : NeutralModeValue.Coast))
-        .start();
   }
 }
