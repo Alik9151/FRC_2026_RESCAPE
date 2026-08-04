@@ -11,17 +11,14 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.*;
 import edu.wpi.first.math.numbers.N1;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.vision.VisionIO.PoseObservationType;
-import frc.robot.util.RobotUtil;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import org.littletonrobotics.junction.Logger;
@@ -30,24 +27,38 @@ public class Vision extends SubsystemBase {
   private final VisionConsumer consumer;
   private final VisionIO[] io;
   private final VisionIOInputsAutoLogged[] inputs;
+  private final VisionIO.ObjDetectIO[] objIO;
+  private final ObjDetectIOInputsAutoLogged[] objInputs;
   private final Alert[] disconnectedAlerts;
 
   public Vision(VisionConsumer consumer, VisionIO... io) {
+    this(consumer, io, new VisionIO.ObjDetectIO[0]);
+  }
+
+  public Vision(VisionConsumer consumer, VisionIO[] io, VisionIO.ObjDetectIO[] objIO) {
     this.consumer = consumer;
     this.io = io;
+    this.objIO = objIO;
 
     // Initialize inputs
     this.inputs = new VisionIOInputsAutoLogged[io.length];
     for (int i = 0; i < inputs.length; i++) {
       inputs[i] = new VisionIOInputsAutoLogged();
     }
+    this.objInputs = new ObjDetectIOInputsAutoLogged[objIO.length];
+    for (int i = 0; i < objInputs.length; i++) {
+      objInputs[i] = new ObjDetectIOInputsAutoLogged();
+    }
 
     // Initialize disconnected alerts
-    this.disconnectedAlerts = new Alert[io.length];
+    this.disconnectedAlerts = new Alert[io.length + objIO.length];
     for (int i = 0; i < inputs.length; i++) {
       disconnectedAlerts[i] =
-          new Alert(
-              "Vision camera " + Integer.toString(i) + " is disconnected.", AlertType.kWarning);
+          new Alert("Vision camera " + i + " is disconnected.", AlertType.kWarning);
+    }
+    for (int i = 0; i < objInputs.length; i++) {
+      disconnectedAlerts[i + io.length] =
+          new Alert("Object detection camera " + i + " is disconnected.", AlertType.kWarning);
     }
   }
 
@@ -64,7 +75,12 @@ public class Vision extends SubsystemBase {
   public void periodic() {
     for (int i = 0; i < io.length; i++) {
       io[i].updateInputs(inputs[i]);
-      Logger.processInputs("Vision/Camera" + Integer.toString(i), inputs[i]);
+      Logger.processInputs("Vision/Camera" + i, inputs[i]);
+    }
+
+    for (int i = 0; i < objIO.length; i++) {
+      objIO[i].updateInputs(objInputs[i]);
+      Logger.processInputs("Vision/ObjectDetection/Camera" + i, objInputs[i]);
     }
 
     // Initialize logging values
@@ -138,22 +154,18 @@ public class Vision extends SubsystemBase {
             observation.pose().toPose2d(),
             observation.timestamp(),
             VecBuilder.fill(linearStdDev, linearStdDev, angularStdDev));
-
-        RobotUtil.isPoseEstimatorReady = true;
       }
 
       // Log camera metadata
       Logger.recordOutput(
-          "Vision/Camera" + Integer.toString(cameraIndex) + "/TagPoses",
-          tagPoses.toArray(new Pose3d[0]));
+          "Vision/Camera" + cameraIndex + "/TagPoses", tagPoses.toArray(new Pose3d[0]));
       Logger.recordOutput(
-          "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPoses",
-          robotPoses.toArray(new Pose3d[0]));
+          "Vision/Camera" + cameraIndex + "/RobotPoses", robotPoses.toArray(new Pose3d[0]));
       Logger.recordOutput(
-          "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesAccepted",
+          "Vision/Camera" + cameraIndex + "/RobotPosesAccepted",
           robotPosesAccepted.toArray(new Pose3d[0]));
       Logger.recordOutput(
-          "Vision/Camera" + Integer.toString(cameraIndex) + "/RobotPosesRejected",
+          "Vision/Camera" + cameraIndex + "/RobotPosesRejected",
           robotPosesRejected.toArray(new Pose3d[0]));
       allTagPoses.addAll(tagPoses);
       allRobotPoses.addAll(robotPoses);
@@ -170,33 +182,43 @@ public class Vision extends SubsystemBase {
         "Vision/Summary/RobotPosesRejected", allRobotPosesRejected.toArray(new Pose3d[0]));
   }
 
-  // Uncomment to continuously log foreign robots (useful for replay):
-  // @AutoLogOutput(key = "Vision/ForeignRobotTranslations")
-  public Translation2d[] getForeignRobotTranslations(Pose2d robotPose) {
-    // Instantiate new array
-    int length = 0;
-    for (var input : inputs) {
-      length += input.relativeForeignRobots.length;
-    }
-    Translation2d[] combined = new Translation2d[length];
-    // Combine all foreign pose estimates
-    int pos = 0;
-    for (VisionIOInputsAutoLogged input : inputs) {
-      System.arraycopy(
-          input.relativeForeignRobots, 0, combined, pos, input.relativeForeignRobots.length);
-      pos += input.relativeForeignRobots.length;
-    }
-    // Translate from robot relative to global translations
-    for (int i = 0; i < combined.length; i++) {
-      combined[i] = combined[i].rotateBy(robotPose.getRotation()).plus(robotPose.getTranslation());
+  public Pose2d[] getForeignRobotPoses(Pose2d robotPose) {
+    // Calculate max possible capacity
+    int capacity = 0;
+    for (var input : objInputs) {
+      capacity += input.objectObservations.length;
     }
 
-    return combined;
+    List<Pose2d> foreignRobotPosesAccepted = new ArrayList<>(capacity);
+    List<Pose2d> foreignRobotPosesRejected = new ArrayList<>(capacity);
+
+    // Combine all foreign pose estimates
+    Pose3d robotPose3d = new Pose3d(robotPose);
+    for (var input : objInputs) {
+      for (var object : input.objectObservations) {
+        if (object.type() != VisionIO.ObjectObservationType.FOREIGN_ROBOT) continue;
+        if (object.ambiguity() <= MAX_OBJ_AMBIGUITY) {
+          // Transform from robot relative to global poses
+          foreignRobotPosesAccepted.add(robotPose3d.plus(object.relativePosition()).toPose2d());
+        } else {
+          foreignRobotPosesRejected.add(robotPose3d.plus(object.relativePosition()).toPose2d());
+        }
+      }
+    }
+
+    Logger.recordOutput(
+        "Vision/ObjectDetection/ForeignRobotPosesAccepted",
+        foreignRobotPosesAccepted.toArray(new Pose2d[0]));
+    Logger.recordOutput(
+        "Vision/ObjectDetection/ForeignRobotPosesRejected",
+        foreignRobotPosesRejected.toArray(new Pose2d[0]));
+
+    return foreignRobotPosesAccepted.toArray(new Pose2d[0]);
   }
 
   @FunctionalInterface
-  public static interface VisionConsumer {
-    public void accept(
+  public interface VisionConsumer {
+    void accept(
         Pose2d visionRobotPoseMeters,
         double timestampSeconds,
         Matrix<N3, N1> visionMeasurementStdDevs);

@@ -12,9 +12,6 @@ import static frc.robot.subsystems.vision.VisionConstants.*;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.networktables.NetworkTableInstance;
-import edu.wpi.first.networktables.StructArraySubscriber;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,8 +23,6 @@ public class VisionIOPhotonVision implements VisionIO {
   protected final PhotonCamera camera;
   protected final Transform3d robotToCamera;
 
-  private final StructArraySubscriber<Translation2d> objSubscriber;
-
   /**
    * Creates a new VisionIOPhotonVision.
    *
@@ -37,12 +32,6 @@ public class VisionIOPhotonVision implements VisionIO {
   public VisionIOPhotonVision(String name, Transform3d robotToCamera) {
     camera = new PhotonCamera(name);
     this.robotToCamera = robotToCamera;
-    this.objSubscriber =
-        NetworkTableInstance.getDefault()
-            .getTable(PhotonCamera.kTableName)
-            .getSubTable(name)
-            .getStructArrayTopic("foreignRobotPoses", Translation2d.struct)
-            .subscribe(new Translation2d[0]);
   }
 
   @Override
@@ -123,10 +112,7 @@ public class VisionIOPhotonVision implements VisionIO {
     }
 
     // Save pose observations to inputs object
-    inputs.poseObservations = new PoseObservation[poseObservations.size()];
-    for (int i = 0; i < poseObservations.size(); i++) {
-      inputs.poseObservations[i] = poseObservations.get(i);
-    }
+    inputs.poseObservations = poseObservations.toArray(new PoseObservation[0]);
 
     // Save tag IDs to inputs objects
     inputs.tagIds = new int[tagIds.size()];
@@ -134,17 +120,59 @@ public class VisionIOPhotonVision implements VisionIO {
     for (int id : tagIds) {
       inputs.tagIds[i++] = id;
     }
+  }
 
-    // Apply camera offset to foreign robot translations
-    Translation2d[] foreignRobots = objSubscriber.get();
-    for (int j = 0; j < foreignRobots.length; j++) {
-      foreignRobots[j] =
-          foreignRobots[j]
-              .rotateBy(robotToCamera.getRotation().toRotation2d())
-              .plus(robotToCamera.getTranslation().toTranslation2d());
+  public static class ObjDetectIOPhotonVision extends VisionIOPhotonVision implements ObjDetectIO {
+    /**
+     * Creates a new VisionIOPhotonVision.
+     *
+     * @param name The configured name of the camera.
+     * @param robotToCamera The 3D position of the camera relative to the robot.
+     */
+    public ObjDetectIOPhotonVision(String name, Transform3d robotToCamera) {
+      super(name, robotToCamera);
     }
 
-    // Save robot relative foreign robot translations
-    inputs.relativeForeignRobots = foreignRobots;
+    @Override
+    public void updateInputs(VisionIOInputs inputs) {}
+
+    @Override
+    public void updateInputs(ObjDetectIOInputs inputs) {
+      inputs.connected = camera.isConnected();
+
+      // Read new camera observations
+      List<ObjectObservation> objectObservations = new LinkedList<>();
+      for (var result : camera.getAllUnreadResults()) {
+        // Update latest target observation
+        if (result.hasTargets()) {
+          inputs.latestTargetObservation =
+              new TargetObservation(
+                  Rotation2d.fromDegrees(result.getBestTarget().getYaw()),
+                  Rotation2d.fromDegrees(result.getBestTarget().getPitch()));
+        } else {
+          inputs.latestTargetObservation =
+              new TargetObservation(Rotation2d.kZero, Rotation2d.kZero);
+        }
+
+        // Update object observations
+        for (var target : result.targets) {
+          Transform3d cameraToTarget = target.bestCameraToTarget;
+          Transform3d robotToTarget = robotToCamera.plus(cameraToTarget);
+          objectObservations.add(
+              new ObjectObservation(
+                  result.getTimestampSeconds(),
+                  robotToTarget,
+                  target.poseAmbiguity,
+                  switch (target.objDetectId) {
+                    case 0 -> ObjectObservationType.GAME_PIECE;
+                    case 1 -> ObjectObservationType.FOREIGN_ROBOT;
+                    default -> ObjectObservationType.INVALID;
+                  }));
+        }
+      }
+
+      // Save observations to inputs object
+      inputs.objectObservations = objectObservations.toArray(new ObjectObservation[0]);
+    }
   }
 }

@@ -9,26 +9,33 @@ package frc.robot.subsystems.vision;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import org.littletonrobotics.junction.AutoLog;
 
 public interface VisionIO {
   @AutoLog
-  public static class VisionIOInputs {
-    public boolean connected = false;
-    public boolean isTagVisible = false;
+  class VisionIOInputs {
+    public boolean connected;
+    public boolean isTagVisible;
     public TargetObservation latestTargetObservation =
         new TargetObservation(Rotation2d.kZero, Rotation2d.kZero);
     public PoseObservation[] poseObservations = new PoseObservation[0];
     public int[] tagIds = new int[0];
-    public Translation2d[] relativeForeignRobots = new Translation2d[0];
+  }
+
+  @AutoLog
+  class ObjDetectIOInputs {
+    public boolean connected;
+    public TargetObservation latestTargetObservation =
+        new TargetObservation(Rotation2d.kZero, Rotation2d.kZero);
+    public ObjectObservation[] objectObservations = new ObjectObservation[0];
   }
 
   /** Represents the angle to a simple target, not used for pose estimation. */
-  public static record TargetObservation(Rotation2d tx, Rotation2d ty) {}
+  record TargetObservation(Rotation2d tx, Rotation2d ty) {}
 
   /** Represents a robot pose sample used for pose estimation. */
-  public static record PoseObservation(
+  record PoseObservation(
       double timestamp,
       Pose3d pose,
       double ambiguity,
@@ -36,11 +43,27 @@ public interface VisionIO {
       double averageTagDistance,
       PoseObservationType type) {}
 
-  public static enum PoseObservationType {
+  enum PoseObservationType {
     MEGATAG_1,
     MEGATAG_2,
     PHOTONVISION
   }
 
-  public default void updateInputs(VisionIOInputs inputs) {}
+  record ObjectObservation(
+      double timestamp,
+      Transform3d relativePosition,
+      double ambiguity,
+      ObjectObservationType type) {}
+
+  enum ObjectObservationType {
+    INVALID,
+    GAME_PIECE,
+    FOREIGN_ROBOT
+  }
+
+  default void updateInputs(VisionIOInputs inputs) {}
+
+  interface ObjDetectIO {
+    default void updateInputs(ObjDetectIOInputs inputs) {}
+  }
 }

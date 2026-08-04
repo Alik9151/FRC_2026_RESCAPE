@@ -38,7 +38,7 @@ public class AutoControlCommands {
   }
 
   private static final double MAX_FOREIGN_ROBOT_ERROR_SQUARED = 0.1 * 0.1; // meters
-  private static final double MAX_ROBOT_AGE = 0.2;
+  private static final double MAX_ROBOT_AGE = 0.3;
   private static final ArrayList<ForeignRobot> foreignRobots =
       new ArrayList<>(8); // 8 is a lucky number
 
@@ -89,7 +89,7 @@ public class AutoControlCommands {
   }
 
   private static void updateObstacles(Drive drive, Vision vision) {
-    Translation2d[] robotTranslations = vision.getForeignRobotTranslations(drive.getPose());
+    Pose2d[] robotPoses = vision.getForeignRobotPoses(drive.getPose());
 
     double currentTime = Timer.getTimestamp();
 
@@ -100,35 +100,38 @@ public class AutoControlCommands {
         });
 
     for (ForeignRobot foreignRobot : foreignRobots) {
-      int indexToUpdate = -1;
-      double min = MAX_FOREIGN_ROBOT_ERROR_SQUARED;
-      for (int i = 0; i < robotTranslations.length; i++) {
-        if (robotTranslations[i] != null) {
-          double distance = foreignRobot.getSquaredDistance(robotTranslations[i]);
-          if (distance < min) {
-            min = distance;
-            indexToUpdate = i;
+      // find closest pose to each robot to update
+      int closestIndex = -1;
+      double minDistError = MAX_FOREIGN_ROBOT_ERROR_SQUARED;
+      for (int i = 0; i < robotPoses.length; i++) {
+        if (robotPoses[i] != null) {
+          double distance = foreignRobot.getSquaredDistance(robotPoses[i].getTranslation());
+          if (distance < minDistError) {
+            minDistError = distance;
+            closestIndex = i;
           }
         }
       }
-      if (indexToUpdate != -1) {
+      // found closest pose, update robot object
+      if (closestIndex != -1) {
         // if velocity wrong look at timestamp if not we're geniuses
-        foreignRobot.updateTranslation(robotTranslations[indexToUpdate], currentTime);
+        foreignRobot.updatePose(robotPoses[closestIndex], currentTime);
+        // since the robot has been matched to a pose, it is visible
         foreignRobot.isVisible = true;
-        robotTranslations[indexToUpdate] = null;
+        // null out element so it won't become new object
+        robotPoses[closestIndex] = null;
       }
     }
 
-    // leftovers get made into new foreign robots
-
-    for (Translation2d robotTranslation : robotTranslations) {
-      if (robotTranslation != null) {
-        foreignRobots.add(new ForeignRobot(currentTime, robotTranslation));
+    // leftover poses get made into new foreign robots
+    for (Pose2d pose : robotPoses) {
+      if (pose != null) {
+        foreignRobots.add(new ForeignRobot(currentTime, pose));
       }
     }
 
     ArrayList<Pair<Translation2d, Translation2d>> obstacleCorners =
-        new ArrayList<>(robotTranslations.length);
+        new ArrayList<>(robotPoses.length);
     for (ForeignRobot robot : foreignRobots) {
       if (robot.isVisible) {
         obstacleCorners.add(robot.getPredictedCorners());

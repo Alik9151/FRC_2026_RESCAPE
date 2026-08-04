@@ -1,7 +1,5 @@
 package frc.robot.util.sim;
 
-import static edu.wpi.first.units.Units.*;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -21,7 +19,6 @@ import java.util.function.Supplier;
 import org.ironmaple.simulation.SimulatedArena;
 import org.ironmaple.simulation.drivesims.GyroSimulation;
 import org.ironmaple.simulation.drivesims.SwerveDriveSimulation;
-import org.ironmaple.simulation.drivesims.configs.DriveTrainSimulationConfig;
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.PhotonCamera;
 
@@ -36,19 +33,8 @@ public class SimulatedObstacle {
           .getStructArrayTopic("foreignRobotPoses", Translation2d.struct)
           .publish();
   private static Supplier<Pose2d> robotPoseSupplier;
-  private static final ArrayList<SimulatedObstacle> obstacles = new ArrayList<>();
+  private static final ArrayList<SimulatedObstacle> obstacles = new ArrayList<>(2);
   private static Pose2d[] poses = new Pose2d[0];
-
-  private static DriveTrainSimulationConfig mapleSimConfig = null;
-
-  public static DriveTrainSimulationConfig getMapleSimConfig() {
-    if (mapleSimConfig != null) return mapleSimConfig;
-
-    return mapleSimConfig =
-        DriveTrainSimulationConfig.Default()
-            .withCustomModuleTranslations(Drive.getModuleTranslations())
-            .withGyro(() -> new GyroSimulation(0, 0));
-  }
 
   private final SwerveDriveSimulation driveSimulation;
   private Pose2d pose;
