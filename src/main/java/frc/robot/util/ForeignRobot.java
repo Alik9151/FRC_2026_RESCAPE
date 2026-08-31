@@ -53,7 +53,7 @@ public class ForeignRobot {
     this.timestamp = newTimestamp;
     this.vx = xKF.getVelocity();
     this.vy = yKF.getVelocity();
-    this.pose = newPose;
+    this.pose = new Pose2d(xKF.getPosition(), yKF.getPosition(), newPose.getRotation());
   }
 
   public Pair<Translation2d, Translation2d> getPredictedCorners() {
